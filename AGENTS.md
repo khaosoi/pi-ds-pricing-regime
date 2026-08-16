@@ -1,8 +1,9 @@
 # pi-ds-pricing-regime — repo conventions
 
-A [pi](https://github.com/earendil-works/pi-coding-agent) extension that shows
-DeepSeek's peak/off-peak billing mode in the footer (bottom-left),
-timezone-aware. Loaded automatically when working inside this repo.
+A [pi](https://github.com/earendil-works/pi-coding-agent) extension that always
+shows DeepSeek's peak/off-peak billing mode in the footer (bottom-left),
+timezone-aware. It is intentionally independent of the currently selected pi
+model/provider. Loaded automatically when working inside this repo.
 
 ## Commands
 

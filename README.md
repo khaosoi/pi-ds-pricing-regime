@@ -16,6 +16,11 @@ display in the machine's local timezone — nothing is hardcoded.
 The status refreshes every 30s, so it flips exactly at hour boundaries and the
 countdown stays fresh.
 
+The indicator is intentionally **always displayed**, regardless of which model
+or provider is currently selected in pi. It reports DeepSeek's current billing
+regime as a standalone clock-based reference, rather than claiming that the
+currently selected model is necessarily DeepSeek.
+
 ## The regime
 
 Source: [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing)

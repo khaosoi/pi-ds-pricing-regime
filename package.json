@@ -35,7 +35,7 @@
     "README.md"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=23"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
