@@ -18,6 +18,7 @@ Use `just` (recipe bodies run the same npm scripts):
 | `just lint` | Run Biome lint rules |
 | `just typecheck` | `tsc -p tsconfig.json` (pi types resolved via the local peer dep) |
 | `just test` | `node --test` — native TS, no test framework (needs Node ≥ 23) |
+| `just coverage` | `node --test --experimental-test-coverage` — coverage report |
 | `just link` / `just unlink` | Symlink `extensions/deepseek-peak-offpeak.ts` into `~/.pi/agent/extensions/` (or remove) |
 | `just pack` | `npm pack --dry-run` — inspect the future tarball |
 

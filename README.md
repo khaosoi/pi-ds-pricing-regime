@@ -70,7 +70,7 @@ just check        # format-check + lint
 just build        # check + typecheck + tests — the release gate
 just typecheck    # tsc against pi's types (resolved via the peer dep in node_modules)
 just test         # node:test — unit, smoke, and timezone matrix tests
-just coverage     # run tests with Node's built-in coverage report
+just coverage     # run tests with Node's built-in coverage report (100% currently)
 just pack         # npm pack --dry-run: inspect the future tarball
 just link          # symlink into ~/.pi/agent/extensions/
 just unlink        # remove the symlink
@@ -97,7 +97,7 @@ process-local virtual timers.
   that land on DST transition instants.
 
 CI (`.github/workflows/ci.yml`) runs formatting/lint checks, typecheck, and
-17 tests on Node 24 for every push/PR.
+20 tests on Node 24 for every push/PR.
 
 ## Publishing checklist (when you're ready)
 

@@ -18,6 +18,8 @@
  *    caught the old "today's date" bug: a boundary landing on a different
  *    date than `now` with a DST transition in between.
  */
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { inPeak, nextBoundaryUtc, formatLocalTime, statusText } from "../extensions/deepseek-peak-offpeak.ts";
 
 const tz = process.env.TZ ?? "(unset)";
@@ -74,48 +76,65 @@ const DST_SCENARIOS = {
 	],
 };
 
-const fixedRows = TABLES[tz];
-const dstRows = DST_SCENARIOS[tz];
-if (!fixedRows && !dstRows) {
-	console.error(`no expectation table for TZ=${tz}`);
-	console.error(`expected one of: ${[...Object.keys(TABLES), ...Object.keys(DST_SCENARIOS)].join(", ")}`);
-	process.exit(2);
-}
-
-const DAY = "2026-08-17T"; // post-regime, so statusText takes the peak/off-peak branch
-let failures = 0;
-
-for (const [hour, expectedPeak, expectedBoundary, expectedStatus] of fixedRows ?? []) {
-	const iso = `${DAY}${String(hour).padStart(2, "0")}:00:00Z`;
-	const now = new Date(iso);
-	const peak = inPeak(now);
-	const local = formatLocalTime(nextBoundaryUtc(now));
-	const { text, color } = statusText(now);
-	const expectedColor = expectedPeak ? "warning" : "success";
-
-	if (peak !== expectedPeak || local !== expectedBoundary || text !== expectedStatus || color !== expectedColor) {
-		failures++;
-		console.error(
-			`FAIL TZ=${tz} ${iso}: expected peak=${expectedPeak} boundary=${expectedBoundary} status="${expectedStatus}" ` +
-				`color=${expectedColor}, got peak=${peak} boundary=${local} status="${text}" (${color})`,
-		);
-	} else {
-		console.log(`ok   TZ=${tz} ${iso}  →  ${text}  (${color})`);
+/**
+ * Run the matrix for one timezone.
+ *
+ * The optional tables/scenarios and output functions make the defensive paths
+ * testable without adding test-only environment switches to the CLI.
+ */
+export function runMatrix(
+	tz,
+	{ tables = TABLES, dstScenarios = DST_SCENARIOS, log = console.log, error = console.error } = {},
+) {
+	const fixedRows = tables[tz];
+	const dstRows = dstScenarios[tz];
+	if (!fixedRows && !dstRows) {
+		error(`no expectation table for TZ=${tz}`);
+		error(`expected one of: ${[...Object.keys(tables), ...Object.keys(dstScenarios)].join(", ")}`);
+		return 2;
 	}
-}
 
-for (const [iso, expectedStatus] of dstRows ?? []) {
-	const { text, color } = statusText(new Date(iso));
-	if (text !== expectedStatus) {
-		failures++;
-		console.error(`FAIL TZ=${tz} ${iso}: expected status="${expectedStatus}", got "${text}" (${color})`);
-	} else {
-		console.log(`ok   TZ=${tz} ${iso}  →  ${text}  (${color})`);
+	const DAY = "2026-08-17T"; // post-regime, so statusText takes the peak/off-peak branch
+	let failures = 0;
+
+	for (const [hour, expectedPeak, expectedBoundary, expectedStatus] of fixedRows ?? []) {
+		const iso = `${DAY}${String(hour).padStart(2, "0")}:00:00Z`;
+		const now = new Date(iso);
+		const peak = inPeak(now);
+		const local = formatLocalTime(nextBoundaryUtc(now));
+		const { text, color } = statusText(now);
+		const expectedColor = expectedPeak ? "warning" : "success";
+
+		if (peak !== expectedPeak || local !== expectedBoundary || text !== expectedStatus || color !== expectedColor) {
+			failures++;
+			error(
+				`FAIL TZ=${tz} ${iso}: expected peak=${expectedPeak} boundary=${expectedBoundary} status="${expectedStatus}" ` +
+					`color=${expectedColor}, got peak=${peak} boundary=${local} status="${text}" (${color})`,
+			);
+		} else {
+			log(`ok   TZ=${tz} ${iso}  →  ${text}  (${color})`);
+		}
 	}
+
+	for (const [iso, expectedStatus] of dstRows ?? []) {
+		const { text, color } = statusText(new Date(iso));
+		if (text !== expectedStatus) {
+			failures++;
+			error(`FAIL TZ=${tz} ${iso}: expected status="${expectedStatus}", got "${text}" (${color})`);
+		} else {
+			log(`ok   TZ=${tz} ${iso}  →  ${text}  (${color})`);
+		}
+	}
+
+	if (failures > 0) {
+		error(`\n${failures} failure(s) for TZ=${tz}`);
+		return 1;
+	}
+	log(`\nall rows passed for TZ=${tz}`);
+	return 0;
 }
 
-if (failures > 0) {
-	console.error(`\n${failures} failure(s) for TZ=${tz}`);
-	process.exit(1);
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+	process.exitCode = runMatrix(tz);
 }
-console.log(`\nall rows passed for TZ=${tz}`);
