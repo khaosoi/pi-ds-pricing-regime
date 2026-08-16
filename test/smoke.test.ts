@@ -2,8 +2,9 @@
  * Smoke test for the extension module: fires session_start / session_shutdown
  * against a mock pi context and verifies the status text and timer lifecycle.
  *
- * Uses node:test mock timers so `new Date()` / `Date.now()` follow a fake clock.
- * The HH:MM local labels depend on the machine TZ; exact labels are covered by
+ * Uses node:test process-local mock timers so `new Date()` follows a virtual
+ * test clock; this never changes the operating system's clock. The HH:MM local
+ * labels depend on the machine TZ; exact labels are covered by
  * the timezone matrix (test/timezone-matrix.test.ts). Here we assert the shape.
  */
 import { test } from "node:test";

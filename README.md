@@ -73,7 +73,9 @@ just link/unlink  # symlink into ~/.pi/agent/extensions/ (or remove)
 Or via npm directly (`npm run typecheck`, `npm test`, `npm run preview:package`).
 
 No test framework is needed: Node ≥ 23 runs the TypeScript sources directly
-(type stripping), and tests use the built-in `node:test` runner.
+(type stripping), and tests use the built-in `node:test` runner. Tests never
+modify the operating system clock; clock-dependent tests use only Node's
+process-local virtual timers.
 
 - `test/regime.test.ts` — window boundaries, next-boundary math, countdown.
 - `test/smoke.test.ts` — loads the real extension with a mock pi context and

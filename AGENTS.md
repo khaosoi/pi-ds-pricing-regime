@@ -40,8 +40,10 @@ Use `just` (recipe bodies run the same npm scripts):
 
 ## Testing notes
 
-- Clock-dependent tests use `t.mock.timers` (Date + setInterval APIs); the
-  pre-regime countdown test is exact while the regime is still upcoming.
+- Clock-dependent tests use `t.mock.timers` only as process-local virtual time
+  (Date + setInterval APIs); they never change the operating system clock.
+- Pure helpers receive explicit instants. The pre-regime countdown test is
+  exact while the regime is still upcoming.
 - The timezone matrix covers the midnight wrap (off-peak → next-day peak).
 - `statusText(now)` is deterministic given the clock; keep it that way — any
   new state should be pure and testable before being wired to the UI.

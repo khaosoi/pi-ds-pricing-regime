@@ -71,9 +71,12 @@ export function nextBoundaryUtc(now: Date): Date {
 	return new Date(dayStart + (nextHour + 24 * dayOffset) * 3_600_000);
 }
 
-/** Human countdown like "~10h 24m" or "~2d", "now" when already reached. */
-export function formatCountdown(targetUtc: number): string {
-	const ms = targetUtc - Date.now();
+/**
+ * Human countdown like "~10h 24m" or "~2d", "now" when already reached.
+ * The reference instant is explicit: this helper never reads the system clock.
+ */
+export function formatCountdown(targetUtc: number, nowUtc: number): string {
+	const ms = targetUtc - nowUtc;
 	if (ms <= 0) return "now";
 	const hours = ms / 3_600_000;
 	if (hours < 48) {
@@ -90,7 +93,7 @@ export function statusText(now: Date): { text: string; color: "dim" | "warning" 
 	if (now.getTime() < EFFECTIVE_UTC) {
 		return {
 			color: "dim",
-			text: `DeepSeek flat pricing — peak/off-peak from ${formatLocalTime(new Date(EFFECTIVE_UTC))} local (${formatCountdown(EFFECTIVE_UTC)})`,
+			text: `DeepSeek flat pricing — peak/off-peak from ${formatLocalTime(new Date(EFFECTIVE_UTC))} local (${formatCountdown(EFFECTIVE_UTC, now.getTime())})`,
 		};
 	}
 

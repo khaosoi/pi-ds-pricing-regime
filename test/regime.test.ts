@@ -1,6 +1,6 @@
 /**
  * Unit tests for the pure regime logic.
- * Deterministic: explicit Date objects, no clock mocking needed except formatCountdown.
+ * Deterministic: all instants are explicit; no system clock is changed or read.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -83,11 +83,16 @@ test("nextBoundaryUtc: peak ends today, off-peak wraps to tomorrow when needed",
 	}
 });
 
-test("formatCountdown: past target, hours, and days", () => {
-	const now = Date.now();
-	assert.equal(formatCountdown(now - 1_000), "now");
-	assert.equal(formatCountdown(now + 3 * 3_600_000), "~3h");
-	assert.equal(formatCountdown(now + 10 * 3_600_000 + 24 * 60_000), "~10h 24m");
-	assert.equal(formatCountdown(now + 25 * 3_600_000), "~25h");
-	assert.equal(formatCountdown(now + 49 * 3_600_000), "~2d");
+test("formatCountdown: explicit reference instant, hours, and days", () => {
+	const now = Date.UTC(2026, 7, 16, 5, 35, 0);
+	assert.equal(formatCountdown(now - 1_000, now), "now");
+	assert.equal(formatCountdown(now + 3 * 3_600_000, now), "~3h");
+	assert.equal(formatCountdown(now + 10 * 3_600_000 + 24 * 60_000, now), "~10h 24m");
+	assert.equal(formatCountdown(now + 25 * 3_600_000, now), "~25h");
+	assert.equal(formatCountdown(now + 49 * 3_600_000, now), "~2d");
+
+	// The result is tied to the supplied instant, not the ambient machine clock.
+	const later = now + 60 * 60_000;
+	assert.equal(formatCountdown(Date.UTC(2026, 7, 16, 16, 0), now), "~10h 25m");
+	assert.equal(formatCountdown(Date.UTC(2026, 7, 16, 16, 0), later), "~9h 25m");
 });
