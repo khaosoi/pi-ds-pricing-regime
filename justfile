@@ -22,6 +22,9 @@ typecheck:
 test:
 	npm test
 
+coverage:
+	npm run coverage
+
 link:
 	npm run link
 

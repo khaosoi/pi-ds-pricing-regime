@@ -70,6 +70,7 @@ just check        # format-check + lint
 just build        # check + typecheck + tests — the release gate
 just typecheck    # tsc against pi's types (resolved via the peer dep in node_modules)
 just test         # node:test — unit, smoke, and timezone matrix tests
+just coverage     # run tests with Node's built-in coverage report
 just pack         # npm pack --dry-run: inspect the future tarball
 just link          # symlink into ~/.pi/agent/extensions/
 just unlink        # remove the symlink
@@ -78,7 +79,8 @@ just unlink        # remove the symlink
 Biome formats and lints TypeScript, JavaScript, JSON, and configuration files.
 The Markdown documentation and `justfile` are intentionally outside these
 recipes. Or use the equivalent npm scripts directly (`npm run format`,
-`npm run format:check`, `npm run lint`, `npm run check`, `npm test`).
+`npm run format:check`, `npm run lint`, `npm run check`, `npm test`, and
+`npm run coverage`).
 
 No test framework is needed: Node ≥ 23 runs the TypeScript sources directly
 (type stripping), and tests use the built-in `node:test` runner. Tests never
