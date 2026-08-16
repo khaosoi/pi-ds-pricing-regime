@@ -76,7 +76,7 @@ test("extension: session_start sets status and schedules refresh; shutdown clean
 	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
 	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
 
-	const { pi, ctx, statuses, calls, fire } = makePi();
+	const { pi, statuses, calls, fire } = makePi();
 	ext(pi as unknown as Parameters<typeof ext>[0]);
 
 	await fire("session_start");
@@ -101,7 +101,7 @@ test("extension: repeated session_start replaces the old timer", async (t) => {
 	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
 	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
 
-	const { pi, ctx, calls, fire } = makePi();
+	const { pi, calls, fire } = makePi();
 	ext(pi as unknown as Parameters<typeof ext>[0]);
 
 	await fire("session_start");
@@ -115,7 +115,7 @@ test("extension: session_start is idempotent before the regime", async (t) => {
 	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
 	t.mock.timers.setTime(new Date("2026-08-16T05:35:00Z").getTime());
 
-	const { pi, ctx, statuses, fire } = makePi();
+	const { pi, statuses, fire } = makePi();
 	ext(pi as unknown as Parameters<typeof ext>[0]);
 
 	await fire("session_start");

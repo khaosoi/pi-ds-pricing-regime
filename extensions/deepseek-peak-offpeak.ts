@@ -100,7 +100,10 @@ export function statusText(now: Date): { text: string; color: "dim" | "warning" 
 	if (inPeak(now)) {
 		return { color: "warning", text: `⚡ DeepSeek PEAK — until ${formatLocalTime(nextBoundaryUtc(now))} local` };
 	}
-	return { color: "success", text: `🌙 DeepSeek off-peak — next peak ${formatLocalTime(nextBoundaryUtc(now))} local` };
+	return {
+		color: "success",
+		text: `🌙 DeepSeek off-peak — next peak ${formatLocalTime(nextBoundaryUtc(now))} local`,
+	};
 }
 
 export default function (pi: ExtensionAPI) {

@@ -63,14 +63,22 @@ package is listed with the `pi-package` keyword for the [package gallery](https:
 ## Development
 
 ```sh
-just build        # typecheck + tests — the release gate (also run by prepublishOnly)
+just format       # format TypeScript, JavaScript, JSON, and config files
+just format-check # verify formatting without changing files
+just lint         # run Biome lint rules
+just check        # format-check + lint
+just build        # check + typecheck + tests — the release gate
 just typecheck    # tsc against pi's types (resolved via the peer dep in node_modules)
 just test         # node:test — unit, smoke, and timezone matrix tests
 just pack         # npm pack --dry-run: inspect the future tarball
-just link/unlink  # symlink into ~/.pi/agent/extensions/ (or remove)
+just link          # symlink into ~/.pi/agent/extensions/
+just unlink        # remove the symlink
 ```
 
-Or via npm directly (`npm run typecheck`, `npm test`, `npm run preview:package`).
+Biome formats and lints TypeScript, JavaScript, JSON, and configuration files.
+The Markdown documentation and `justfile` are intentionally outside these
+recipes. Or use the equivalent npm scripts directly (`npm run format`,
+`npm run format:check`, `npm run lint`, `npm run check`, `npm test`).
 
 No test framework is needed: Node ≥ 23 runs the TypeScript sources directly
 (type stripping), and tests use the built-in `node:test` runner. Tests never
@@ -86,8 +94,8 @@ process-local virtual timers.
   including the midnight wrap to the next day's peak and regime boundaries
   that land on DST transition instants.
 
-CI (`.github/workflows/ci.yml`) runs typecheck + tests on Node 24 for every
-push/PR.
+CI (`.github/workflows/ci.yml`) runs formatting/lint checks, typecheck, and
+17 tests on Node 24 for every push/PR.
 
 ## Publishing checklist (when you're ready)
 

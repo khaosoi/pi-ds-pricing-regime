@@ -108,9 +108,7 @@ for (const [iso, expectedStatus] of dstRows ?? []) {
 	const { text, color } = statusText(new Date(iso));
 	if (text !== expectedStatus) {
 		failures++;
-		console.error(
-			`FAIL TZ=${tz} ${iso}: expected status="${expectedStatus}", got "${text}" (${color})`,
-		);
+		console.error(`FAIL TZ=${tz} ${iso}: expected status="${expectedStatus}", got "${text}" (${color})`);
 	} else {
 		console.log(`ok   TZ=${tz} ${iso}  →  ${text}  (${color})`);
 	}
