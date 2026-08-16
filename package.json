@@ -1,0 +1,17 @@
+{
+  "name": "pi-ds-pricing-regime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pi extension: shows DeepSeek peak/off-peak billing mode in the footer, timezone-aware",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test",
+    "link": "node scripts/install.mjs link",
+    "unlink": "node scripts/install.mjs unlink"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
