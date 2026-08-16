@@ -8,7 +8,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import ext, { statusText } from "../src/deepseek-peak-offpeak.ts";
+import ext, { statusText } from "../extensions/deepseek-peak-offpeak.ts";
 
 type StatusMap = Map<string, string>;
 const LOCAL = /^\d{2}:\d{2}$/;

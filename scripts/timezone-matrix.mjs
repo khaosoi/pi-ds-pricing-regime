@@ -12,7 +12,7 @@
  * peak/off-peak branch. Fixed-offset Etc/GMT zones are used so the expected
  * local labels never drift with daylight-saving changes.
  */
-import { inPeak, nextBoundaryUtcHour, utcHourToLocalString, statusText } from "../src/deepseek-peak-offpeak.ts";
+import { inPeak, nextBoundaryUtcHour, utcHourToLocalString, statusText } from "../extensions/deepseek-peak-offpeak.ts";
 
 const tz = process.env.TZ ?? "(unset)";
 

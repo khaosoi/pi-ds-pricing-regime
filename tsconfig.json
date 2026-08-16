@@ -10,13 +10,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"],
-    "baseUrl": ".",
-    "paths": {
-      "@earendil-works/pi-coding-agent": [
-        "@earendil-works/pi-coding-agent"
-      ]
-    }
+    "types": ["node"]
   },
-  "include": ["src/**/*.ts", "test/**/*.ts", "scripts/**/*.mjs"]
+  "include": ["extensions/**/*.ts", "test/**/*.ts", "scripts/**/*.mjs"]
 }

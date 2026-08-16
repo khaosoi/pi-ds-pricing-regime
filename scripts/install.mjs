@@ -19,7 +19,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 
 const FILE_NAME = "deepseek-peak-offpeak.ts";
-const source = join(projectRoot, "src", FILE_NAME);
+const source = join(projectRoot, "extensions", FILE_NAME);
 const targetDir = join(homedir(), ".pi", "agent", "extensions");
 const target = join(targetDir, FILE_NAME);
 

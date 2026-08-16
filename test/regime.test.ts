@@ -10,7 +10,7 @@ import {
 	inPeak,
 	nextBoundaryUtcHour,
 	formatCountdown,
-} from "../src/deepseek-peak-offpeak.ts";
+} from "../extensions/deepseek-peak-offpeak.ts";
 
 test("peak windows are configured as documented", () => {
 	assert.deepEqual(PEAK_WINDOWS, [

@@ -1,14 +1,55 @@
 {
-  "name": "pi-ds-pricing-regime",
+  "name": "@khaosoigai/pi-ds-pricing-regime",
   "version": "0.1.0",
-  "private": true,
   "description": "Pi extension: shows DeepSeek peak/off-peak billing mode in the footer, timezone-aware",
+  "keywords": [
+    "pi",
+    "pi-package",
+    "pi-extension",
+    "deepseek",
+    "peak",
+    "off-peak",
+    "pricing"
+  ],
+  "license": "MIT",
+  "private": true,
+  "pi": {
+    "extensions": ["./extensions"]
+  },
+  "author": {
+    "name": "khaosoigai",
+    "url": "https://github.com/khaosoi"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khaosoi/pi-ds-pricing-regime.git"
+  },
+  "bugs": {
+    "url": "https://github.com/khaosoi/pi-ds-pricing-regime/issues"
+  },
+  "homepage": "https://github.com/khaosoi/pi-ds-pricing-regime#readme",
   "type": "module",
+  "files": [
+    "extensions",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test",
     "link": "node scripts/install.mjs link",
-    "unlink": "node scripts/install.mjs unlink"
+    "unlink": "node scripts/install.mjs unlink",
+    "preview:package": "npm pack --dry-run",
+    "prepublishOnly": "npm run typecheck && npm test"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

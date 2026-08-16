@@ -23,28 +23,44 @@ Source: [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing
 - **Peak hours (UTC):** `01:00–04:00` and `06:00–10:00`; all other hours are off-peak at half the peak rates.
 - **Effective:** `2026-08-16T16:00:00Z` (before that, billing is flat).
 
-Both are constants at the top of [`src/deepseek-peak-offpeak.ts`](src/deepseek-peak-offpeak.ts)
+Both are constants at the top of
+[`extensions/deepseek-peak-offpeak.ts`](extensions/deepseek-peak-offpeak.ts)
 (`PEAK_WINDOWS`, `EFFECTIVE_UTC`) — edit them if DeepSeek changes the regime.
 
 ## Install
 
+From this repo (development):
+
 ```sh
 npm install        # dev deps (typescript, @types/node) — once
-npm run link       # symlink src/deepseek-peak-offpeak.ts into ~/.pi/agent/extensions/
+npm run link       # symlink extensions/deepseek-peak-offpeak.ts into ~/.pi/agent/extensions/
 ```
 
 Then run `/reload` inside pi (or restart pi). The extension is auto-discovered
 from the global extensions dir; the symlink keeps the source of truth in this
 repo. `npm run unlink` removes it (any pre-existing file is kept as `*.bak`).
 
-> Alternative: copy `src/deepseek-peak-offpeak.ts` into `.pi/extensions/` of a
-> project for a project-local install.
+> Alternative: copy `extensions/deepseek-peak-offpeak.ts` into `.pi/extensions/`
+> of a project for a project-local install.
+
+### From npm (future)
+
+Once published, it installs as a pi package:
+
+```sh
+pi install npm:@khaosoigai/pi-ds-pricing-regime
+```
+
+The package is structured as a pi package: `package.json` declares a
+[`pi` manifest](https://pi.dev/docs/packages) loading `./extensions`, and the
+package is listed with the `pi-package` keyword for the [package gallery](https://pi.dev/packages).
 
 ## Development
 
 ```sh
-npm run typecheck  # tsc against pi's types (global install at node_modules/...)
+npm run typecheck  # tsc against pi's types (resolved via the peer dep in node_modules)
 npm test           # node:test — unit, smoke, and timezone matrix tests
+npm run preview:package  # npm pack --dry-run: inspect the future tarball
 ```
 
 No test framework is needed: Node ≥ 23 runs the TypeScript sources directly
@@ -56,6 +72,26 @@ No test framework is needed: Node ≥ 23 runs the TypeScript sources directly
 - `test/timezone-matrix.test.ts` — runs `scripts/timezone-matrix.mjs` under
   three forced timezones (UTC+8, UTC+10, UTC-5) and asserts exact local-time
   labels, including the midnight wrap to the next day's peak.
+
+CI (`.github/workflows/ci.yml`) runs typecheck + tests on Node 24 for every
+push/PR.
+
+## Publishing checklist (when you're ready)
+
+Nothing is published yet — `package.json` still has `"private": true` as a
+guard. The metadata for a future public release is already in place:
+
+- scoped name `@khaosoigai/pi-ds-pricing-regime` (name reserved to your npm account)
+- MIT license (`LICENSE` + `license` field)
+- `repository`/`bugs`/`homepage` point at `github.com/khaosoi/pi-ds-pricing-regime` — adjust if the repo gets a different name
+- `publishConfig.access: "public"` so the scoped package publishes publicly
+- `prepublishOnly` gate: runs typecheck + tests before every publish
+
+When you actually want to release:
+
+1. `npm run preview:package` — confirm the tarball contains only `extensions/`, `LICENSE`, `README.md`
+2. In `package.json`: set `"private": false` (or delete the line), bump `version`
+3. `npm login` (account `khaosoigai`) then `npm publish`
 
 ## Notes
 
