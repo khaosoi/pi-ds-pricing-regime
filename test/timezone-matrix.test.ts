@@ -9,7 +9,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const script = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "timezone-matrix.mjs");
-const tzs = ["Etc/GMT-8", "Etc/GMT-10", "Etc/GMT+5"]; // UTC+8, UTC+10, UTC-5 (fixed offsets)
+// Fixed-offset zones (stable expectations) plus real DST zones (transition scenarios).
+const tzs = ["Etc/GMT-8", "Etc/GMT-10", "Etc/GMT+5", "America/New_York", "Australia/Sydney"];
 
 for (const tz of tzs) {
 	test(`timezone matrix: ${tz}`, () => {

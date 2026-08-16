@@ -9,6 +9,7 @@ import {
 	EFFECTIVE_UTC,
 	inPeak,
 	nextBoundaryUtcHour,
+	nextBoundaryUtc,
 	formatCountdown,
 } from "../extensions/deepseek-peak-offpeak.ts";
 
@@ -58,6 +59,27 @@ test("nextBoundaryUtcHour: peak → window end, off-peak → next window start (
 	];
 	for (const [time, expected] of cases) {
 		assert.equal(nextBoundaryUtcHour(new Date(day + time)), expected, `nextBoundaryUtcHour(${time})`);
+	}
+});
+
+test("nextBoundaryUtc: peak ends today, off-peak wraps to tomorrow when needed", () => {
+	const cases: Array<[string, string]> = [
+		// peak → end of current window, same UTC day
+		["2026-08-17T01:30:00Z", "2026-08-17T04:00:00Z"],
+		["2026-08-17T06:20:00Z", "2026-08-17T10:00:00Z"],
+		// off-peak → next window start, same day
+		["2026-08-17T00:30:00Z", "2026-08-17T01:00:00Z"],
+		["2026-08-17T05:35:00Z", "2026-08-17T06:00:00Z"],
+		// off-peak → wraps to the next UTC day
+		["2026-08-17T11:00:00Z", "2026-08-18T01:00:00Z"],
+		["2026-08-17T23:59:00Z", "2026-08-18T01:00:00Z"],
+	];
+	for (const [nowIso, expectedIso] of cases) {
+		assert.equal(
+			nextBoundaryUtc(new Date(nowIso)).getTime(),
+			new Date(expectedIso).getTime(),
+			`nextBoundaryUtc(${nowIso})`,
+		);
 	}
 });
 

@@ -74,8 +74,10 @@ No test framework is needed: Node ≥ 23 runs the TypeScript sources directly
 - `test/smoke.test.ts` — loads the real extension with a mock pi context and
   mocked timers: pre-regime / peak / off-peak status text, and timer lifecycle.
 - `test/timezone-matrix.test.ts` — runs `scripts/timezone-matrix.mjs` under
-  three forced timezones (UTC+8, UTC+10, UTC-5) and asserts exact local-time
-  labels, including the midnight wrap to the next day's peak.
+  fixed-offset zones (UTC+8, UTC+10, UTC-5) and real DST zones
+  (America/New_York, Australia/Sydney), asserting exact local-time labels
+  including the midnight wrap to the next day's peak and regime boundaries
+  that land on DST transition instants.
 
 CI (`.github/workflows/ci.yml`) runs typecheck + tests on Node 24 for every
 push/PR.
@@ -102,6 +104,7 @@ When you actually want to release:
 - Labels show the *next regime boundary* in local time, not the full schedule,
   to keep the footer compact (e.g. `until 12:00 local` rather than
   `09:00–12:00, 14:00–18:00`).
-- `utcHourToLocalString` converts a UTC hour to wall-clock using *today's*
-  date; around DST transitions the boundary label can be off by an hour for a
-  few days. Acceptable for a status indicator, but worth knowing.
+- Boundary labels are rendered from the boundary's *actual instant*
+  (`nextBoundaryUtc` → `formatLocalTime`), so they stay correct even when a
+  DST transition falls between now and the boundary (covered by the DST
+  scenarios in the timezone matrix).

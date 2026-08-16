@@ -46,13 +46,29 @@ export function nextBoundaryUtcHour(now: Date): number {
 	return Math.floor((next ?? boundaries[0]) / 60);
 }
 
-/** Render a UTC hour as wall-clock "HH:MM" in the machine's local timezone. */
-export function utcHourToLocalString(utcHour: number): string {
-	const now = new Date();
-	const at = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), utcHour, 0, 0));
+/** "HH:MM" wall-clock for an instant, in the machine's local timezone. */
+export function formatLocalTime(at: Date): string {
 	const hh = String(at.getHours()).padStart(2, "0");
 	const mm = String(at.getMinutes()).padStart(2, "0");
 	return `${hh}:${mm}`;
+}
+
+/**
+ * The next regime boundary after `now`, as an absolute UTC instant.
+ * Peak → end of the current window; off-peak → start of the next window
+ * (wrapping to the next UTC day). Uses `now`'s own date, so the local-time
+ * label stays correct even when a DST transition falls between `now` and
+ * the boundary.
+ */
+export function nextBoundaryUtc(now: Date): Date {
+	const dayStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+	if (inPeak(now)) {
+		return new Date(dayStart + nextBoundaryUtcHour(now) * 3_600_000);
+	}
+	const currentMinute = now.getUTCHours() * 60 + now.getUTCMinutes();
+	const nextHour = nextBoundaryUtcHour(now);
+	const dayOffset = nextHour * 60 > currentMinute ? 0 : 1; // wrapped past midnight → tomorrow
+	return new Date(dayStart + (nextHour + 24 * dayOffset) * 3_600_000);
 }
 
 /** Human countdown like "~10h 24m" or "~2d", "now" when already reached. */
@@ -72,19 +88,16 @@ export function formatCountdown(targetUtc: number): string {
 export function statusText(now: Date): { text: string; color: "dim" | "warning" | "success" } {
 	// Before the regime there is no peak/off-peak yet.
 	if (now.getTime() < EFFECTIVE_UTC) {
-		const at = new Date(EFFECTIVE_UTC);
-		const hh = String(at.getHours()).padStart(2, "0");
-		const mm = String(at.getMinutes()).padStart(2, "0");
 		return {
 			color: "dim",
-			text: `DeepSeek flat pricing — peak/off-peak from ${hh}:${mm} local (${formatCountdown(EFFECTIVE_UTC)})`,
+			text: `DeepSeek flat pricing — peak/off-peak from ${formatLocalTime(new Date(EFFECTIVE_UTC))} local (${formatCountdown(EFFECTIVE_UTC)})`,
 		};
 	}
 
 	if (inPeak(now)) {
-		return { color: "warning", text: `⚡ DeepSeek PEAK — until ${utcHourToLocalString(nextBoundaryUtcHour(now))} local` };
+		return { color: "warning", text: `⚡ DeepSeek PEAK — until ${formatLocalTime(nextBoundaryUtc(now))} local` };
 	}
-	return { color: "success", text: `🌙 DeepSeek off-peak — next peak ${utcHourToLocalString(nextBoundaryUtcHour(now))} local` };
+	return { color: "success", text: `🌙 DeepSeek off-peak — next peak ${formatLocalTime(nextBoundaryUtc(now))} local` };
 }
 
 export default function (pi: ExtensionAPI) {

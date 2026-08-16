@@ -21,9 +21,9 @@ Use `just` (recipe bodies run the same npm scripts):
 - `extensions/deepseek-peak-offpeak.ts` — the extension. **Constants live at the
   top**: `PEAK_WINDOWS` (peak hours, `[start, end)` UTC) and `EFFECTIVE_UTC`
   (regime start). If DeepSeek changes the regime, edit here. Pure helpers
-  (`inPeak`, `nextBoundaryUtcHour`, `utcHourToLocalString`, `formatCountdown`,
-  `statusText`) are exported for tests; the default export wires them to
-  `ctx.ui.setStatus`.
+  (`inPeak`, `nextBoundaryUtcHour`, `nextBoundaryUtc`, `formatLocalTime`,
+  `formatCountdown`, `statusText`) are exported for tests; the default export
+  wires them to `ctx.ui.setStatus`.
 - `test/` — `regime.test.ts` (window/boundary/countdown math),
   `smoke.test.ts` (mock pi context + mock timers; status text + timer
   lifecycle), `timezone-matrix.test.ts` (spawns the matrix script under forced
@@ -31,8 +31,9 @@ Use `just` (recipe bodies run the same npm scripts):
 - `scripts/install.mjs` — link/unlink installer. Uses `os.homedir()` and the
   script's own location at runtime — **never hardcode user/machine paths in
   this repo**.
-- `scripts/timezone-matrix.mjs` — expectation tables per forced TZ. Uses
-  fixed-offset `Etc/GMT` zones so expectations never rot with DST.
+- `scripts/timezone-matrix.mjs` — expectation tables per forced TZ: fixed
+  `Etc/GMT` zones (stable expectations) plus real DST zones with
+  transition-scenario assertions.
 - `package.json` — publish-ready (scoped name, MIT, `pi` manifest → `./extensions`,
   `files` whitelist, `publishConfig.access: public`, `prepublishOnly` gate).
 
