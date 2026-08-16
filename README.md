@@ -58,10 +58,14 @@ package is listed with the `pi-package` keyword for the [package gallery](https:
 ## Development
 
 ```sh
-npm run typecheck  # tsc against pi's types (resolved via the peer dep in node_modules)
-npm test           # node:test — unit, smoke, and timezone matrix tests
-npm run preview:package  # npm pack --dry-run: inspect the future tarball
+just build        # typecheck + tests — the release gate (also run by prepublishOnly)
+just typecheck    # tsc against pi's types (resolved via the peer dep in node_modules)
+just test         # node:test — unit, smoke, and timezone matrix tests
+just pack         # npm pack --dry-run: inspect the future tarball
+just link/unlink  # symlink into ~/.pi/agent/extensions/ (or remove)
 ```
+
+Or via npm directly (`npm run typecheck`, `npm test`, `npm run preview:package`).
 
 No test framework is needed: Node ≥ 23 runs the TypeScript sources directly
 (type stripping), and tests use the built-in `node:test` runner.
