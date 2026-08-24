@@ -48,6 +48,17 @@ Use `just` (recipe bodies run the same npm scripts):
 - `package.json` — publish-ready (scoped name, MIT, `pi` manifest → `./extensions`,
   `files` whitelist, `publishConfig.access: public`, `prepublishOnly` gate).
 
+## Worktrees
+
+All tooling config is tracked (justfile, biome.json, tsconfig.json, package.json +
+lockfile), so a `git worktree add` gets identical settings. Two caveats:
+
+- `node_modules/` is untracked — run `npm ci` in each new worktree before
+  `just build`.
+- `just link` / `just unlink` manage the symlink in `~/.pi/agent/extensions/`,
+  which is global state: linking from a worktree overwrites the main
+  checkout's symlink. Only one checkout can be the linked version at a time.
+
 ## Testing notes
 
 - Clock-dependent tests use `t.mock.timers` only as process-local virtual time
