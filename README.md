@@ -9,12 +9,11 @@ display in the machine's local timezone — nothing is hardcoded.
 
 | State | Footer text (bottom-left) |
 | --- | --- |
-| Before the regime (flat pricing) | `DeepSeek flat pricing — peak/off-peak from 00:00 local (~10h 24m)` (dim) |
 | Peak hours | `⚡ DeepSeek PEAK — until 12:00 local` (amber) |
 | Off-peak | `🌙 DeepSeek off-peak — next peak 09:00 local` (green) |
+| Weekend (Beijing time) | `🌙 DeepSeek off-peak (weekend flat rate) — next peak 09:00 local` (green) |
 
-The status refreshes every 30s, so it flips exactly at hour boundaries and the
-countdown stays fresh.
+The status refreshes every 30s, so it flips exactly at hour boundaries.
 
 The indicator is intentionally **always displayed**, regardless of which model
 or provider is currently selected in pi. It reports DeepSeek's current billing
@@ -26,11 +25,16 @@ currently selected model is necessarily DeepSeek.
 Source: [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing)
 
 - **Peak hours (UTC):** `01:00–04:00` and `06:00–10:00`; all other hours are off-peak at half the peak rates.
-- **Effective:** `2026-08-16T16:00:00Z` (before that, billing is flat).
+- **Live since:** `2026-08-16T16:00:00Z` (before that, billing was flat).
+- **Weekends:** since `2026-08-22T16:00:00Z` (= 2026-08-23 00:00 Beijing), Saturdays and
+  Sundays in Beijing calendar time have no peak tiers — every call bills at the uniform
+  off-peak rate. The next peak after a live weekend is Monday 01:00 UTC; late UTC Sunday
+  evenings are already Monday in Beijing, so weekday rules resume there.
 
-Both are constants at the top of
+All are constants at the top of
 [`extensions/deepseek-peak-offpeak.ts`](extensions/deepseek-peak-offpeak.ts)
-(`PEAK_WINDOWS`, `EFFECTIVE_UTC`) — edit them if DeepSeek changes the regime.
+(`PEAK_WINDOWS`, `WEEKEND_OFFPEAK_UTC`) — edit them if DeepSeek
+changes the regime.
 
 ## Install
 
@@ -87,9 +91,10 @@ No test framework is needed: Node ≥ 23 runs the TypeScript sources directly
 modify the operating system clock; clock-dependent tests use only Node's
 process-local virtual timers.
 
-- `test/regime.test.ts` — window boundaries, next-boundary math, countdown.
+- `test/regime.test.ts` — window boundaries, next-boundary math, weekend
+  flat-rate rule.
 - `test/smoke.test.ts` — loads the real extension with a mock pi context and
-  mocked timers: pre-regime / peak / off-peak status text, and timer lifecycle.
+  mocked timers: peak / off-peak / weekend status text, and timer lifecycle.
 - `test/timezone-matrix.test.ts` — runs `scripts/timezone-matrix.mjs` under
   fixed-offset zones (UTC+8, UTC+10, UTC-5) and real DST zones
   (America/New_York, Australia/Sydney), asserting exact local-time labels
@@ -97,7 +102,7 @@ process-local virtual timers.
   that land on DST transition instants.
 
 CI (`.github/workflows/ci.yml`) runs formatting/lint checks, typecheck, and
-20 tests on Node 24 for every push/PR.
+21 tests on Node 24 for every push/PR.
 
 ## Publishing checklist (when you're ready)
 

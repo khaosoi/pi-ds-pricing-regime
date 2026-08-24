@@ -12,7 +12,6 @@ import assert from "node:assert/strict";
 import ext, { statusText } from "../extensions/deepseek-peak-offpeak.ts";
 
 type StatusMap = Map<string, string>;
-const LOCAL = /^\d{2}:\d{2}$/;
 
 function makePi() {
 	const handlers = new Map<string, Array<(e: unknown, ctx: unknown) => Promise<void> | void>>();
@@ -45,15 +44,6 @@ function makePi() {
 	return { pi, ctx, statuses, calls, fire, handlers };
 }
 
-test("statusText: pre-regime shows flat pricing with countdown", (t) => {
-	t.mock.timers.enable({ apis: ["Date"] });
-	t.mock.timers.setTime(new Date("2026-08-16T05:35:00Z").getTime());
-
-	const { text, color } = statusText(new Date());
-	assert.equal(color, "dim");
-	assert.match(text, /^DeepSeek flat pricing — peak\/off-peak from \d{2}:\d{2} local \(~10h 25m\)$/);
-});
-
 test("statusText: peak window", (t) => {
 	t.mock.timers.enable({ apis: ["Date"] });
 	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
@@ -70,6 +60,15 @@ test("statusText: off-peak window", (t) => {
 	const { text, color } = statusText(new Date());
 	assert.equal(color, "success");
 	assert.match(text, /^🌙 DeepSeek off-peak — next peak \d{2}:\d{2} local$/);
+});
+
+test("statusText: weekend flat rate", (t) => {
+	t.mock.timers.enable({ apis: ["Date"] });
+	t.mock.timers.setTime(new Date("2026-08-22T18:00:00Z").getTime()); // Sunday in Beijing time
+
+	const { text, color } = statusText(new Date());
+	assert.equal(color, "success");
+	assert.match(text, /^🌙 DeepSeek off-peak \(weekend flat rate\) — next peak \d{2}:\d{2} local$/);
 });
 
 test("extension: session_start sets status and schedules refresh; shutdown cleans up", async (t) => {
@@ -109,21 +108,4 @@ test("extension: repeated session_start replaces the old timer", async (t) => {
 	const before = calls.setStatus;
 	t.mock.timers.tick(30_000);
 	assert.ok(calls.setStatus > before);
-});
-
-test("extension: session_start is idempotent before the regime", async (t) => {
-	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
-	t.mock.timers.setTime(new Date("2026-08-16T05:35:00Z").getTime());
-
-	const { pi, statuses, fire } = makePi();
-	ext(pi as unknown as Parameters<typeof ext>[0]);
-
-	await fire("session_start");
-	const text = statuses.get("deepseek");
-	assert.ok(text);
-	assert.match(text, /^\[dim\]DeepSeek flat pricing —/);
-	// Local label must be a valid HH:MM.
-	const m = text.match(/from (\d{2}:\d{2}) local/);
-	assert.ok(m, "expected a local start time in the label");
-	assert.match(m[1], LOCAL);
 });

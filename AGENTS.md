@@ -25,12 +25,14 @@ Use `just` (recipe bodies run the same npm scripts):
 ## Structure
 
 - `extensions/deepseek-peak-offpeak.ts` — the extension. **Constants live at the
-  top**: `PEAK_WINDOWS` (peak hours, `[start, end)` UTC) and `EFFECTIVE_UTC`
-  (regime start). If DeepSeek changes the regime, edit here. Pure helpers
-  (`inPeak`, `nextBoundaryUtcHour`, `nextBoundaryUtc`, `formatLocalTime`,
-  `formatCountdown`, `statusText`) are exported for tests; the default export
-  wires them to `ctx.ui.setStatus`.
-- `test/` — `regime.test.ts` (window/boundary/countdown math),
+  top**: `PEAK_WINDOWS` (peak hours, `[start, end)` UTC) and `WEEKEND_OFFPEAK_UTC`
+  (weekend flat-rate start; Sat/Sun Beijing time is off-peak all day from then;
+  the tiered regime itself has been live since 2026-08-16T16:00:00Z). If
+  DeepSeek changes the regime, edit here. Pure helpers (`inPeak`,
+  `isWeekendBeijing`, `nextBoundaryUtcHour`, `nextBoundaryUtc`, `formatLocalTime`,
+  `statusText`) are exported for tests; the default export wires them to
+  `ctx.ui.setStatus`.
+- `test/` — `regime.test.ts` (window/boundary/weekend math),
   `smoke.test.ts` (mock pi context + process-local mock timers; status text +
   timer lifecycle), `timezone-matrix.test.ts` (spawns the matrix script under
   fixed-offset and real DST TZs and asserts exact local labels).
@@ -50,11 +52,11 @@ Use `just` (recipe bodies run the same npm scripts):
 
 - Clock-dependent tests use `t.mock.timers` only as process-local virtual time
   (Date + setInterval APIs); they never change the operating system clock.
-- Pure helpers receive explicit instants. The pre-regime countdown test is
-  exact while the regime is still upcoming.
-- The timezone matrix covers the midnight wrap (off-peak → next-day peak).
-- `statusText(now)` is deterministic given the clock; keep it that way — any
-  new state should be pure and testable before being wired to the UI.
+- The timezone matrix covers the midnight wrap (off-peak → next-day peak) and
+  weekend flat-rate scenarios, including DST transitions.
+- Pure helpers receive explicit instants; `statusText(now)` is deterministic
+  given the clock. Keep it that way — any new state should be pure and
+  testable before being wired to the UI.
 
 ## Publishing (do NOT do without explicit user go-ahead)
 

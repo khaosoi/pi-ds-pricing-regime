@@ -6,11 +6,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
 	PEAK_WINDOWS,
-	EFFECTIVE_UTC,
+	WEEKEND_OFFPEAK_UTC,
 	inPeak,
+	isWeekendBeijing,
 	nextBoundaryUtcHour,
 	nextBoundaryUtc,
-	formatCountdown,
 } from "../extensions/deepseek-peak-offpeak.ts";
 
 test("peak windows are configured as documented", () => {
@@ -20,8 +20,8 @@ test("peak windows are configured as documented", () => {
 	]);
 });
 
-test("effective date is 2026-08-16T16:00:00Z", () => {
-	assert.equal(EFFECTIVE_UTC, Date.UTC(2026, 7, 16, 16, 0, 0));
+test("weekend rule takes effect 2026-08-22T16:00:00Z (2026-08-23 00:00 Beijing)", () => {
+	assert.equal(WEEKEND_OFFPEAK_UTC, Date.UTC(2026, 7, 22, 16, 0, 0));
 });
 
 test("inPeak: window boundaries are half-open", () => {
@@ -83,16 +83,40 @@ test("nextBoundaryUtc: peak ends today, off-peak wraps to tomorrow when needed",
 	}
 });
 
-test("formatCountdown: explicit reference instant, hours, and days", () => {
-	const now = Date.UTC(2026, 7, 16, 5, 35, 0);
-	assert.equal(formatCountdown(now - 1_000, now), "now");
-	assert.equal(formatCountdown(now + 3 * 3_600_000, now), "~3h");
-	assert.equal(formatCountdown(now + 10 * 3_600_000 + 24 * 60_000, now), "~10h 24m");
-	assert.equal(formatCountdown(now + 25 * 3_600_000, now), "~25h");
-	assert.equal(formatCountdown(now + 49 * 3_600_000, now), "~2d");
+test("isWeekendBeijing follows the Beijing calendar day (fixed UTC+8)", () => {
+	assert.equal(isWeekendBeijing(new Date("2026-08-22T15:59:59Z")), true); // Sat 23:59:59 Beijing
+	assert.equal(isWeekendBeijing(new Date("2026-08-22T16:00:00Z")), true); // Sun 00:00:00 Beijing
+	assert.equal(isWeekendBeijing(new Date("2026-08-23T15:59:59Z")), true); // Sun 23:59:59 Beijing
+	assert.equal(isWeekendBeijing(new Date("2026-08-23T16:00:00Z")), false); // Mon 00:00:00 Beijing
+	assert.equal(isWeekendBeijing(new Date("2026-08-23T07:00:00Z")), true); // Sun 15:00 Beijing
+	assert.equal(isWeekendBeijing(new Date("2026-08-24T15:59:59Z")), false); // Mon 23:59 Beijing
+});
 
-	// The result is tied to the supplied instant, not the ambient machine clock.
-	const later = now + 60 * 60_000;
-	assert.equal(formatCountdown(Date.UTC(2026, 7, 16, 16, 0), now), "~10h 25m");
-	assert.equal(formatCountdown(Date.UTC(2026, 7, 16, 16, 0), later), "~9h 25m");
+test("inPeak: weekends are off-peak once the weekend rule is live", () => {
+	// Before the weekend rule, the legacy tiered schedule applied on Saturdays too.
+	assert.equal(inPeak(new Date("2026-08-15T02:00:00Z")), true); // Sat 02:00 UTC
+	// The rule flips exactly at 2026-08-22T16:00:00Z (Sun 00:00 Beijing). The
+	// last legacy peak is Saturday 06:00–10:00 UTC; after that no more peaks.
+	assert.equal(inPeak(new Date("2026-08-22T09:00:00Z")), true);
+	assert.equal(inPeak(new Date("2026-08-22T16:00:00Z")), false);
+	assert.equal(inPeak(new Date("2026-08-23T07:00:00Z")), false); // Sunday
+	assert.equal(inPeak(new Date("2026-08-23T02:00:00Z")), false); // Sunday, would-be peak hour
+	// Monday resumes the tiered schedule.
+	assert.equal(inPeak(new Date("2026-08-24T02:00:00Z")), true);
+});
+
+test("nextBoundaryUtc: live weekends roll the next peak to Monday 01:00 UTC", () => {
+	const cases: Array<[string, string]> = [
+		["2026-08-22T18:00:00Z", "2026-08-24T01:00:00Z"], // Saturday evening → Monday peak
+		["2026-08-23T23:59:00Z", "2026-08-24T01:00:00Z"], // Sunday late night → Monday peak
+		["2026-08-28T12:00:00Z", "2026-08-31T01:00:00Z"], // Friday off-peak skips the whole weekend
+		["2026-08-21T06:20:00Z", "2026-08-21T10:00:00Z"], // Friday peak still ends the same day
+	];
+	for (const [nowIso, expectedIso] of cases) {
+		assert.equal(
+			nextBoundaryUtc(new Date(nowIso)).getTime(),
+			new Date(expectedIso).getTime(),
+			`nextBoundaryUtc(${nowIso})`,
+		);
+	}
 });

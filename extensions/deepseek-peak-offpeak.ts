@@ -9,7 +9,11 @@
  * DeepSeek's regime (per api-docs.deepseek.com/quick_start/pricing):
  *   Peak hours (UTC): 01:00–04:00 and 06:00–10:00
  *   All other hours are off-peak (half the peak rates).
- *   Peak/off-peak billing takes effect 2026-08-16T16:00:00Z.
+ *   Peak/off-peak billing has been live since 2026-08-16T16:00:00Z.
+ *
+ *   Since 2026-08-22T16:00:00Z (= 2026-08-23 00:00 Beijing), Saturdays and
+ *   Sundays (Beijing calendar time) have no peak tiers at all: every call
+ *   is billed at the uniform off-peak rate.
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
@@ -20,20 +24,40 @@ export const PEAK_WINDOWS: ReadonlyArray<readonly [number, number]> = [
 	[6, 10], // 06:00–10:00 UTC
 ];
 
-/** Billing regime change: 2026-08-16T16:00:00Z. */
-export const EFFECTIVE_UTC = Date.UTC(2026, 7, 16, 16, 0, 0);
+/**
+ * Weekend flat-rate rule: from 2026-08-22T16:00:00Z (2026-08-23 00:00
+ * Beijing), Saturdays and Sundays in Beijing time are off-peak all day.
+ */
+export const WEEKEND_OFFPEAK_UTC = Date.UTC(2026, 7, 22, 16, 0, 0);
+
+/** China observes a fixed UTC+8 offset year-round (no DST). */
+const BEIJING_OFFSET_MS = 8 * 3_600_000;
+const DAY_MS = 86_400_000;
 
 const STATUS_KEY = "deepseek";
 const REFRESH_MS = 30_000; // refresh a few times per minute so the local-time label stays current
 
-/** True when `now` (UTC) falls inside a peak window. */
+/** True when `now` falls on a Saturday or Sunday in Beijing calendar time. */
+export function isWeekendBeijing(now: Date): boolean {
+	const day = new Date(now.getTime() + BEIJING_OFFSET_MS).getUTCDay();
+	return day === 0 || day === 6;
+}
+
+/**
+ * True when `now` (UTC) falls inside a peak window.
+ * Once the weekend rule is live (WEEKEND_OFFPEAK_UTC), Saturdays and Sundays
+ * in Beijing time never peak. Before that instant the legacy tiered schedule
+ * applied every day of the week.
+ */
 export function inPeak(now: Date): boolean {
+	if (now.getTime() >= WEEKEND_OFFPEAK_UTC && isWeekendBeijing(now)) return false;
 	const hour = now.getUTCHours();
 	return PEAK_WINDOWS.some(([start, end]) => hour >= start && hour < end);
 }
 
 /**
- * The next regime boundary after `now`, as a UTC hour (0–23).
+ * The next regime boundary after `now`, as a UTC hour (0–23), assuming the
+ * weekday tiered schedule (used for the peak → end-of-window computation).
  * - If currently peak: the end of the current peak window.
  * - If currently off-peak: the start of the next peak window (wrapping to tomorrow).
  */
@@ -55,50 +79,39 @@ export function formatLocalTime(at: Date): string {
 
 /**
  * The next regime boundary after `now`, as an absolute UTC instant.
- * Peak → end of the current window; off-peak → start of the next window
- * (wrapping to the next UTC day). Uses `now`'s own date, so the local-time
- * label stays correct even when a DST transition falls between `now` and
- * the boundary.
+ * Peak → end of the current window; off-peak → start of the next window,
+ * scanning forward over UTC days while skipping candidate instants that fall
+ * on a live Beijing weekend (the next peak after Friday is Monday 01:00 UTC).
+ * Uses `now`'s own date, so the local-time label stays correct even when a
+ * DST transition falls between `now` and the boundary.
  */
 export function nextBoundaryUtc(now: Date): Date {
 	const dayStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 	if (inPeak(now)) {
 		return new Date(dayStart + nextBoundaryUtcHour(now) * 3_600_000);
 	}
-	const currentMinute = now.getUTCHours() * 60 + now.getUTCMinutes();
-	const nextHour = nextBoundaryUtcHour(now);
-	const dayOffset = nextHour * 60 > currentMinute ? 0 : 1; // wrapped past midnight → tomorrow
-	return new Date(dayStart + (nextHour + 24 * dayOffset) * 3_600_000);
-}
-
-/**
- * Human countdown like "~10h 24m" or "~2d", "now" when already reached.
- * The reference instant is explicit: this helper never reads the system clock.
- */
-export function formatCountdown(targetUtc: number, nowUtc: number): string {
-	const ms = targetUtc - nowUtc;
-	if (ms <= 0) return "now";
-	const hours = ms / 3_600_000;
-	if (hours < 48) {
-		const h = Math.floor(hours);
-		const m = Math.round((hours - h) * 60);
-		return m > 0 ? `~${h}h ${m}m` : `~${h}h`;
+	for (let d = 0; d < 9; d++) {
+		const utcDayStart = dayStart + d * DAY_MS;
+		for (const [start] of PEAK_WINDOWS) {
+			const at = utcDayStart + start * 3_600_000;
+			if (at <= now.getTime()) continue;
+			if (at >= WEEKEND_OFFPEAK_UTC && isWeekendBeijing(new Date(at))) continue;
+			return new Date(at);
+		}
 	}
-	return `~${Math.round(hours / 24)}d`;
+	throw new Error("no peak window found within the next 9 days");
 }
 
 /** The status text for `now`, or undefined to clear the status. */
-export function statusText(now: Date): { text: string; color: "dim" | "warning" | "success" } {
-	// Before the regime there is no peak/off-peak yet.
-	if (now.getTime() < EFFECTIVE_UTC) {
-		return {
-			color: "dim",
-			text: `DeepSeek flat pricing — peak/off-peak from ${formatLocalTime(new Date(EFFECTIVE_UTC))} local (${formatCountdown(EFFECTIVE_UTC, now.getTime())})`,
-		};
-	}
-
+export function statusText(now: Date): { text: string; color: "warning" | "success" } {
 	if (inPeak(now)) {
 		return { color: "warning", text: `⚡ DeepSeek PEAK — until ${formatLocalTime(nextBoundaryUtc(now))} local` };
+	}
+	if (now.getTime() >= WEEKEND_OFFPEAK_UTC && isWeekendBeijing(now)) {
+		return {
+			color: "success",
+			text: `🌙 DeepSeek off-peak (weekend flat rate) — next peak ${formatLocalTime(nextBoundaryUtc(now))} local`,
+		};
 	}
 	return {
 		color: "success",
