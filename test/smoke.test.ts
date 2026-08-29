@@ -44,13 +44,15 @@ function makePi() {
 	return { pi, ctx, statuses, calls, fire, handlers };
 }
 
+const OPTIONAL_DAY = "(?:[A-Z][a-z]+ )?"; // weekday prefix when the boundary is not today
+
 test("statusText: peak window", (t) => {
 	t.mock.timers.enable({ apis: ["Date"] });
 	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
 
 	const { text, color } = statusText(new Date());
 	assert.equal(color, "warning");
-	assert.match(text, /^⚡ DeepSeek PEAK — until \d{2}:\d{2} local$/);
+	assert.match(text, new RegExp(`^⚡ DeepSeek PEAK — until ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
 });
 
 test("statusText: off-peak window", (t) => {
@@ -59,7 +61,7 @@ test("statusText: off-peak window", (t) => {
 
 	const { text, color } = statusText(new Date());
 	assert.equal(color, "success");
-	assert.match(text, /^🌙 DeepSeek off-peak — next peak \d{2}:\d{2} local$/);
+	assert.match(text, new RegExp(`^🌙 DeepSeek off-peak — next peak ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
 });
 
 test("statusText: weekend flat rate", (t) => {
@@ -68,7 +70,10 @@ test("statusText: weekend flat rate", (t) => {
 
 	const { text, color } = statusText(new Date());
 	assert.equal(color, "success");
-	assert.match(text, /^🌙 DeepSeek off-peak \(weekend flat rate\) — next peak \d{2}:\d{2} local$/);
+	assert.match(
+		text,
+		new RegExp(`^🌙 DeepSeek off-peak \\(weekend flat rate\\) — next peak ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`),
+	);
 });
 
 test("extension: session_start sets status and schedules refresh; shutdown cleans up", async (t) => {
@@ -82,7 +87,7 @@ test("extension: session_start sets status and schedules refresh; shutdown clean
 	assert.equal(statuses.size, 1);
 	const text = statuses.get("deepseek");
 	assert.ok(text, "expected a status for key 'deepseek'");
-	assert.match(text, /^\[warning\]⚡ DeepSeek PEAK — until \d{2}:\d{2} local$/);
+	assert.match(text, new RegExp(`^\\[warning\\]⚡ DeepSeek PEAK — until ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
 
 	// The interval re-renders the status every REFRESH_MS (30s).
 	const before = calls.setStatus;

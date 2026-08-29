@@ -11,7 +11,11 @@ display in the machine's local timezone — nothing is hardcoded.
 | --- | --- |
 | Peak hours | `⚡ DeepSeek PEAK — until 12:00 local` (amber) |
 | Off-peak | `🌙 DeepSeek off-peak — next peak 09:00 local` (green) |
-| Weekend (Beijing time) | `🌙 DeepSeek off-peak (weekend flat rate) — next peak 09:00 local` (green) |
+| Weekend (Beijing time) | `🌙 DeepSeek off-peak (weekend flat rate) — next peak Monday 09:00 local` (green) |
+
+When the next boundary is not today (e.g. on a weekend morning), the label
+includes the boundary's local weekday so `09:00` is not mistaken for today's
+clock time.
 
 The status refreshes every 30s, so it flips exactly at hour boundaries.
 
@@ -130,3 +134,6 @@ When you actually want to release:
   (`nextBoundaryUtc` → `formatLocalTime`), so they stay correct even when a
   DST transition falls between now and the boundary (covered by the DST
   scenarios in the timezone matrix).
+- A boundary on a later local date is prefixed with its local weekday name
+  (`formatLocalDayPrefix`), so Saturday morning reads `next peak Monday 09:00
+  local` rather than a bare `09:00` that looks like today.

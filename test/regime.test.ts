@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import {
 	PEAK_WINDOWS,
 	WEEKEND_OFFPEAK_UTC,
+	formatLocalDayPrefix,
 	inPeak,
 	isWeekendBeijing,
 	nextBoundaryUtcHour,
@@ -81,6 +82,22 @@ test("nextBoundaryUtc: peak ends today, off-peak wraps to tomorrow when needed",
 			`nextBoundaryUtc(${nowIso})`,
 		);
 	}
+});
+
+test("formatLocalDayPrefix: empty for the same local date, weekday name otherwise", () => {
+	const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+	// The same-instant case is same-local-date in every timezone.
+	assert.equal(formatLocalDayPrefix(new Date("2026-08-29T01:39:00Z"), new Date("2026-08-29T01:39:00Z")), "");
+	// Two instants over 24h apart are on different local dates in every timezone.
+	const now = new Date("2026-08-29T01:39:00Z"); // Saturday morning
+	const monday = new Date("2026-08-31T01:00:00Z");
+	assert.equal(formatLocalDayPrefix(now, monday), "Monday ");
+	assert.equal(formatLocalDayPrefix(now, new Date("2026-08-30T01:00:00Z")), "Sunday ");
+	// For same-UTC-date instants the local-date relation is timezone-dependent,
+	// so derive the expectation from the machine's local calendar.
+	const later = new Date("2026-08-29T09:00:00Z");
+	const expected = now.getDate() === later.getDate() ? "" : `${DAY_NAMES[later.getDay()]} `;
+	assert.equal(formatLocalDayPrefix(now, later), expected);
 });
 
 test("isWeekendBeijing follows the Beijing calendar day (fixed UTC+8)", () => {

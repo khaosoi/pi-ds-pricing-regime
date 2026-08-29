@@ -77,6 +77,20 @@ export function formatLocalTime(at: Date): string {
 	return `${hh}:${mm}`;
 }
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+
+/**
+ * "" when `at` falls on the same local calendar date as `now`; otherwise the
+ * English weekday name of `at` followed by a space (e.g. "Monday "). Used so a
+ * boundary that is not today is not mistaken for today's clock time — e.g. on
+ * Saturday morning the next peak reads "Monday 09:00 local", not "09:00 local".
+ */
+export function formatLocalDayPrefix(now: Date, at: Date): string {
+	const sameLocalDay =
+		now.getFullYear() === at.getFullYear() && now.getMonth() === at.getMonth() && now.getDate() === at.getDate();
+	return sameLocalDay ? "" : `${DAY_NAMES[at.getDay()]} `;
+}
+
 /**
  * The next regime boundary after `now`, as an absolute UTC instant.
  * Peak → end of the current window; off-peak → start of the next window,
@@ -104,18 +118,20 @@ export function nextBoundaryUtc(now: Date): Date {
 
 /** The status text for `now`, or undefined to clear the status. */
 export function statusText(now: Date): { text: string; color: "warning" | "success" } {
+	const boundary = nextBoundaryUtc(now);
+	const label = `${formatLocalDayPrefix(now, boundary)}${formatLocalTime(boundary)}`;
 	if (inPeak(now)) {
-		return { color: "warning", text: `⚡ DeepSeek PEAK — until ${formatLocalTime(nextBoundaryUtc(now))} local` };
+		return { color: "warning", text: `⚡ DeepSeek PEAK — until ${label} local` };
 	}
 	if (now.getTime() >= WEEKEND_OFFPEAK_UTC && isWeekendBeijing(now)) {
 		return {
 			color: "success",
-			text: `🌙 DeepSeek off-peak (weekend flat rate) — next peak ${formatLocalTime(nextBoundaryUtc(now))} local`,
+			text: `🌙 DeepSeek off-peak (weekend flat rate) — next peak ${label} local`,
 		};
 	}
 	return {
 		color: "success",
-		text: `🌙 DeepSeek off-peak — next peak ${formatLocalTime(nextBoundaryUtc(now))} local`,
+		text: `🌙 DeepSeek off-peak — next peak ${label} local`,
 	};
 }
 
