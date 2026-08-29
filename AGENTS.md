@@ -3,7 +3,9 @@
 A [pi](https://github.com/earendil-works/pi-coding-agent) extension that always
 shows DeepSeek's peak/off-peak billing mode in the footer (bottom-left),
 timezone-aware, while the selected model comes from the DeepSeek provider
-(`ctx.model.provider === "deepseek"`); other providers hide the status. Loaded automatically when working inside this repo.
+(`ctx.model.provider === "deepseek"`); other providers hide the status.
+Installed globally as a git package from the private GitHub repo — see
+Install below.
 
 ## Commands
 
@@ -19,7 +21,7 @@ Use `just` (recipe bodies run the same npm scripts):
 | `just typecheck` | `tsc -p tsconfig.json` (pi types resolved via the local peer dep) |
 | `just test` | `node --test` — native TS, no test framework (needs Node ≥ 23) |
 | `just coverage` | `node --test --experimental-test-coverage` — coverage report |
-| `just link` / `just unlink` | Symlink `extensions/deepseek-peak-offpeak.ts` into `~/.pi/agent/extensions/` (or remove) |
+| `just link` / `just unlink` | Symlink `extensions/deepseek-peak-offpeak.ts` into `~/.pi/agent/extensions/` (or remove). Legacy dev flow — see Install below |
 | `just pack` | `npm pack --dry-run` — inspect the future tarball |
 
 ## Structure
@@ -49,6 +51,22 @@ Use `just` (recipe bodies run the same npm scripts):
   transition-scenario assertions.
 - `package.json` — publish-ready (scoped name, MIT, `pi` manifest → `./extensions`,
   `files` whitelist, `publishConfig.access: public`, `prepublishOnly` gate).
+
+## Install
+
+Installed as a **git package** from the private repo
+`git:git@github.com:khaosoi/pi-ds-pricing-regime` (SSH; entry lives in the
+`packages` array in `~/.pi/agent/settings.json`). Pi clones it to
+`~/.pi/agent/git/github.com/khaosoi/pi-ds-pricing-regime/` and runs
+`npm install` there. The entry has no pinned ref, so `pi update --extensions`
+pulls latest `main` — push to `main`, run that, restart pi. Pin with
+`pi install git:git@github.com:khaosoi/pi-ds-pricing-regime@<ref>` when a
+stable point is wanted. When the npm package ships, swap the settings entry
+for `npm:@khaosoigai/pi-ds-pricing-regime`.
+
+Do not use `just link` while the git package is installed — both would load
+the extension at once (symlink and package are separate identities, no
+deduplication).
 
 ## Worktrees
 
