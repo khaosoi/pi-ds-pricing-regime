@@ -9,7 +9,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import ext, { isDeepSeekModel, statusText } from "../extensions/deepseek-peak-offpeak.ts";
+import ext, { isDeepSeekModel, STATUS_KEY, statusText } from "../extensions/deepseek-peak-offpeak.ts";
 
 const DEEPSEEK_MODEL = { provider: "deepseek", id: "deepseek-chat" };
 const OTHER_MODEL = { provider: "opencode-go", id: "glm-5.3-flash" };
@@ -95,7 +95,7 @@ test("extension: session_start sets status and schedules refresh; shutdown clean
 
 	await fire("session_start");
 	assert.equal(statuses.size, 1);
-	const text = statuses.get("deepseek");
+	const text = statuses.get(STATUS_KEY);
 	assert.ok(text, "expected a status for key 'deepseek'");
 	assert.match(text, new RegExp(`^\\[warning\\]⚡ DeepSeek PEAK — until ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
 
@@ -141,7 +141,7 @@ test("extension: no status when the selected model is not from the deepseek prov
 	// Switching to a deepseek model turns the status on without a restart.
 	setModel(DEEPSEEK_MODEL);
 	await fire("model_select", { model: DEEPSEEK_MODEL });
-	assert.match(statuses.get("deepseek") ?? "", /DeepSeek (PEAK|off-peak)/);
+	assert.match(statuses.get(STATUS_KEY) ?? "", /DeepSeek (PEAK|off-peak)/);
 });
 
 test("extension: model_select away from deepseek clears the status immediately", async (t) => {
@@ -152,13 +152,13 @@ test("extension: model_select away from deepseek clears the status immediately",
 	ext(pi as unknown as Parameters<typeof ext>[0]);
 
 	await fire("session_start");
-	assert.ok(statuses.get("deepseek"), "expected the status under a deepseek model");
+	assert.ok(statuses.get(STATUS_KEY), "expected the status under a deepseek model");
 
 	setModel(OTHER_MODEL);
 	await fire("model_select", { model: OTHER_MODEL });
-	assert.equal(statuses.has("deepseek"), false, "status must be cleared on switch away");
+	assert.equal(statuses.has(STATUS_KEY), false, "status must be cleared on switch away");
 
 	// And it stays cleared while the interval ticks.
 	t.mock.timers.tick(60_000);
-	assert.equal(statuses.has("deepseek"), false);
+	assert.equal(statuses.has(STATUS_KEY), false);
 });

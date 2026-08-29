@@ -41,7 +41,10 @@ export const DEEPSEEK_PROVIDER = "deepseek";
 const BEIJING_OFFSET_MS = 8 * 3_600_000;
 const DAY_MS = 86_400_000;
 
-const STATUS_KEY = "deepseek";
+// Pi's footer sorts extension statuses alphabetically by key, left to right.
+// "zz-" prefix keeps this status right of others (e.g. "tavily-usage" stays
+// on the left margin). The key is never displayed — only the status text.
+export const STATUS_KEY = "zz-deepseek-regime";
 const REFRESH_MS = 30_000; // refresh a few times per minute so the local-time label stays current
 
 /** True when `now` falls on a Saturday or Sunday in Beijing calendar time. */
