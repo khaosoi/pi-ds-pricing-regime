@@ -19,10 +19,11 @@ clock time.
 
 The status refreshes every 30s, so it flips exactly at hour boundaries.
 
-The indicator is intentionally **always displayed**, regardless of which model
-or provider is currently selected in pi. It reports DeepSeek's current billing
-regime as a standalone clock-based reference, rather than claiming that the
-currently selected model is necessarily DeepSeek.
+The indicator is shown **only while the selected model comes from the DeepSeek
+provider** (`ctx.model.provider === "deepseek"`) — the regime is DeepSeek API
+pricing, so it is meaningless for other providers. Switching models with
+`/model` or `Ctrl+P` clears or restores the status immediately. The provider id
+is a constant (`DEEPSEEK_PROVIDER`) at the top of the extension.
 
 ## The regime
 
@@ -37,8 +38,8 @@ Source: [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing
 
 All are constants at the top of
 [`extensions/deepseek-peak-offpeak.ts`](extensions/deepseek-peak-offpeak.ts)
-(`PEAK_WINDOWS`, `WEEKEND_OFFPEAK_UTC`) — edit them if DeepSeek
-changes the regime.
+(`PEAK_WINDOWS`, `WEEKEND_OFFPEAK_UTC`, `DEEPSEEK_PROVIDER`) — edit them if
+DeepSeek changes the regime.
 
 ## Install
 

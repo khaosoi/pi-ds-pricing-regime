@@ -9,11 +9,14 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import ext, { statusText } from "../extensions/deepseek-peak-offpeak.ts";
+import ext, { isDeepSeekModel, statusText } from "../extensions/deepseek-peak-offpeak.ts";
+
+const DEEPSEEK_MODEL = { provider: "deepseek", id: "deepseek-chat" };
+const OTHER_MODEL = { provider: "opencode-go", id: "glm-5.3-flash" };
 
 type StatusMap = Map<string, string>;
 
-function makePi() {
+function makePi(model: unknown = DEEPSEEK_MODEL) {
 	const handlers = new Map<string, Array<(e: unknown, ctx: unknown) => Promise<void> | void>>();
 	const statuses: StatusMap = new Map();
 	const calls = { setStatus: 0 };
@@ -25,6 +28,7 @@ function makePi() {
 	};
 
 	const ctx = {
+		model,
 		ui: {
 			theme: {
 				fg: (color: string, text: string) => `[${color}]${text}`,
@@ -37,11 +41,11 @@ function makePi() {
 		},
 	};
 
-	const fire = async (event: string) => {
-		for (const h of handlers.get(event) ?? []) await h({}, ctx);
+	const fire = async (event: string, e: unknown = {}) => {
+		for (const h of handlers.get(event) ?? []) await h(e, ctx);
 	};
 
-	return { pi, ctx, statuses, calls, fire, handlers };
+	return { pi, ctx, statuses, calls, fire, handlers, setModel: (m: unknown) => (ctx.model = m) };
 }
 
 const OPTIONAL_DAY = "(?:[A-Z][a-z]+ )?"; // weekday prefix when the boundary is not today
@@ -74,6 +78,12 @@ test("statusText: weekend flat rate", (t) => {
 		text,
 		new RegExp(`^🌙 DeepSeek off-peak \\(weekend flat rate\\) — next peak ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`),
 	);
+});
+
+test("isDeepSeekModel: matches the deepseek provider only", () => {
+	assert.equal(isDeepSeekModel(DEEPSEEK_MODEL), true);
+	assert.equal(isDeepSeekModel(OTHER_MODEL), false);
+	assert.equal(isDeepSeekModel(undefined), false);
 });
 
 test("extension: session_start sets status and schedules refresh; shutdown cleans up", async (t) => {
@@ -113,4 +123,42 @@ test("extension: repeated session_start replaces the old timer", async (t) => {
 	const before = calls.setStatus;
 	t.mock.timers.tick(30_000);
 	assert.ok(calls.setStatus > before);
+});
+
+test("extension: no status when the selected model is not from the deepseek provider", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, calls, fire, setModel } = makePi(OTHER_MODEL);
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+
+	await fire("session_start");
+	assert.equal(statuses.size, 0, "non-deepseek model must not show the status");
+	t.mock.timers.tick(60_000);
+	assert.equal(statuses.size, 0, "interval must keep the status hidden");
+	assert.equal(calls.setStatus > 0, true, "interval still runs, clearing defensively");
+
+	// Switching to a deepseek model turns the status on without a restart.
+	setModel(DEEPSEEK_MODEL);
+	await fire("model_select", { model: DEEPSEEK_MODEL });
+	assert.match(statuses.get("deepseek") ?? "", /DeepSeek (PEAK|off-peak)/);
+});
+
+test("extension: model_select away from deepseek clears the status immediately", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, fire, setModel } = makePi(DEEPSEEK_MODEL);
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+
+	await fire("session_start");
+	assert.ok(statuses.get("deepseek"), "expected the status under a deepseek model");
+
+	setModel(OTHER_MODEL);
+	await fire("model_select", { model: OTHER_MODEL });
+	assert.equal(statuses.has("deepseek"), false, "status must be cleared on switch away");
+
+	// And it stays cleared while the interval ticks.
+	t.mock.timers.tick(60_000);
+	assert.equal(statuses.has("deepseek"), false);
 });

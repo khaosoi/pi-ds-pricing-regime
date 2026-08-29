@@ -2,8 +2,8 @@
 
 A [pi](https://github.com/earendil-works/pi-coding-agent) extension that always
 shows DeepSeek's peak/off-peak billing mode in the footer (bottom-left),
-timezone-aware. It is intentionally independent of the currently selected pi
-model/provider. Loaded automatically when working inside this repo.
+timezone-aware, while the selected model comes from the DeepSeek provider
+(`ctx.model.provider === "deepseek"`); other providers hide the status. Loaded automatically when working inside this repo.
 
 ## Commands
 
@@ -25,13 +25,15 @@ Use `just` (recipe bodies run the same npm scripts):
 ## Structure
 
 - `extensions/deepseek-peak-offpeak.ts` — the extension. **Constants live at the
-  top**: `PEAK_WINDOWS` (peak hours, `[start, end)` UTC) and `WEEKEND_OFFPEAK_UTC`
+  top**: `PEAK_WINDOWS` (peak hours, `[start, end)` UTC), `WEEKEND_OFFPEAK_UTC`
   (weekend flat-rate start; Sat/Sun Beijing time is off-peak all day from then;
-  the tiered regime itself has been live since 2026-08-16T16:00:00Z). If
+  the tiered regime itself has been live since 2026-08-16T16:00:00Z), and
+  `DEEPSEEK_PROVIDER` (the provider id that gates visibility). If
   DeepSeek changes the regime, edit here. Pure helpers (`inPeak`,
   `isWeekendBeijing`, `nextBoundaryUtcHour`, `nextBoundaryUtc`, `formatLocalTime`,
-  `statusText`) are exported for tests; the default export wires them to
-  `ctx.ui.setStatus`.
+  `formatLocalDayPrefix`, `isDeepSeekModel`, `statusText`) are exported for
+  tests; the default export wires them to `ctx.ui.setStatus`, gated on
+  `ctx.model` and refreshed on `model_select`.
 - `test/` — `regime.test.ts` (window/boundary/weekend math),
   `smoke.test.ts` (mock pi context + process-local mock timers; status text +
   timer lifecycle), `timezone-matrix.test.ts` (spawns the matrix script under
@@ -66,8 +68,9 @@ lockfile), so a `git worktree add` gets identical settings. Two caveats:
 - The timezone matrix covers the midnight wrap (off-peak → next-day peak) and
   weekend flat-rate scenarios, including DST transitions.
 - Pure helpers receive explicit instants; `statusText(now)` is deterministic
-  given the clock. Keep it that way — any new state should be pure and
-  testable before being wired to the UI.
+  given the clock, and `isDeepSeekModel` is pure on the model object. Keep it
+  that way — any new state should be pure and testable before being wired to
+  the UI.
 
 ## Publishing (do NOT do without explicit user go-ahead)
 

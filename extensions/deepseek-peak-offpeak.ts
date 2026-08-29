@@ -6,6 +6,10 @@
  * All boundary times in the status are shown in the machine's local
  * timezone — no timezone is hardcoded.
  *
+ * The status is only displayed while the selected model comes from the
+ * DeepSeek provider (`ctx.model.provider === "deepseek"`); switching models
+ * clears or restores it immediately.
+ *
  * DeepSeek's regime (per api-docs.deepseek.com/quick_start/pricing):
  *   Peak hours (UTC): 01:00–04:00 and 06:00–10:00
  *   All other hours are off-peak (half the peak rates).
@@ -29,6 +33,9 @@ export const PEAK_WINDOWS: ReadonlyArray<readonly [number, number]> = [
  * Beijing), Saturdays and Sundays in Beijing time are off-peak all day.
  */
 export const WEEKEND_OFFPEAK_UTC = Date.UTC(2026, 7, 22, 16, 0, 0);
+
+/** Provider id whose models the billing indicator is shown for. Edit here if the provider id changes. */
+export const DEEPSEEK_PROVIDER = "deepseek";
 
 /** China observes a fixed UTC+8 offset year-round (no DST). */
 const BEIJING_OFFSET_MS = 8 * 3_600_000;
@@ -116,6 +123,14 @@ export function nextBoundaryUtc(now: Date): Date {
 	throw new Error("no peak window found within the next 9 days");
 }
 
+/**
+ * True when the given model (e.g. `ctx.model`) is served by the DeepSeek
+ * provider, i.e. when the peak/off-peak regime actually applies to it.
+ */
+export function isDeepSeekModel(model: { provider?: string } | undefined | null): boolean {
+	return model?.provider === DEEPSEEK_PROVIDER;
+}
+
 /** The status text for `now`, or undefined to clear the status. */
 export function statusText(now: Date): { text: string; color: "warning" | "success" } {
 	const boundary = nextBoundaryUtc(now);
@@ -138,15 +153,23 @@ export function statusText(now: Date): { text: string; color: "warning" | "succe
 export default function (pi: ExtensionAPI) {
 	let timer: ReturnType<typeof setInterval> | undefined;
 
-	const update = (ctx: ExtensionContext) => {
+	const update = (ctx: ExtensionContext, model: ExtensionContext["model"]) => {
+		if (!isDeepSeekModel(model)) {
+			ctx.ui.setStatus(STATUS_KEY, undefined);
+			return;
+		}
 		const { text, color } = statusText(new Date());
 		ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg(color, text));
 	};
 
 	pi.on("session_start", async (_event, ctx) => {
 		if (timer) clearInterval(timer);
-		update(ctx);
-		timer = setInterval(() => update(ctx), REFRESH_MS);
+		update(ctx, ctx.model);
+		timer = setInterval(() => update(ctx, ctx.model), REFRESH_MS);
+	});
+
+	pi.on("model_select", async (event, ctx) => {
+		update(ctx, ctx.model ?? event.model);
 	});
 
 	pi.on("session_shutdown", async () => {
