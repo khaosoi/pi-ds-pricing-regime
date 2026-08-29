@@ -29,7 +29,8 @@ is a constant (`DEEPSEEK_PROVIDER`) at the top of the extension.
 
 Source: [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing)
 
-- **Peak hours (UTC):** `01:00–04:00` and `06:00–10:00`; all other hours are off-peak at half the peak rates.
+- **Peak hours (UTC):** `01:00–04:00` and `06:00–10:00`; all other hours are
+  off-peak at half the peak rates.
 - **Live since:** `2026-08-16T16:00:00Z` (before that, billing was flat).
 - **Weekends:** since `2026-08-22T16:00:00Z` (= 2026-08-23 00:00 Beijing), Saturdays and
   Sundays in Beijing calendar time have no peak tiers — every call bills at the uniform
@@ -115,13 +116,15 @@ guard. The metadata for a future public release is already in place:
 
 - scoped name `@khaosoigai/pi-ds-pricing-regime` (name reserved to your npm account)
 - MIT license (`LICENSE` + `license` field)
-- `repository`/`bugs`/`homepage` point at `github.com/khaosoi/pi-ds-pricing-regime` — adjust if the repo gets a different name
+- `repository`/`bugs`/`homepage` point at `github.com/khaosoi/pi-ds-pricing-regime`
+  — adjust if the repo gets a different name
 - `publishConfig.access: "public"` so the scoped package publishes publicly
 - `prepublishOnly` gate: runs typecheck + tests before every publish
 
 When you actually want to release:
 
-1. `npm run preview:package` — confirm the tarball contains only `extensions/`, `LICENSE`, `README.md`
+1. `npm run preview:package` — confirm the tarball contains only `extensions/`,
+   `LICENSE`, `README.md`
 2. In `package.json`: set `"private": false` (or delete the line), bump `version`
 3. Make the GitHub repo public (npm installs don't need it, but the
    `repository` links and gallery listing should resolve), then

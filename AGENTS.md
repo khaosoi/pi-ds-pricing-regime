@@ -88,7 +88,8 @@ Currently `"private": true` as an accidental-publish guard. Release checklist
 
 1. `just pack` — confirm tarball contents
 2. Set `"private": false` (or delete the line), bump `version`
-3. `npm login` (account `khaosoigai`), then `npm publish` (`prepublishOnly` runs check, typecheck, and tests)
+3. `npm login` (account `khaosoigai`), then `npm publish`
+   (`prepublishOnly` runs check, typecheck, and tests)
 
 Public identities: GitHub/git = `khaosoi`, npm = `khaosoigai`. Commits are
 authored by the global git config (`khaosoi <165171671+khaosoi@users.noreply.github.com>`);
