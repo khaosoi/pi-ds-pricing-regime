@@ -25,11 +25,5 @@ test:
 coverage:
 	npm run coverage
 
-link:
-	npm run link
-
-unlink:
-	npm run unlink
-
 pack:
 	npm run preview:package

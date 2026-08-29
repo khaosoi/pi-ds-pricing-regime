@@ -21,7 +21,6 @@ Use `just` (recipe bodies run the same npm scripts):
 | `just typecheck` | `tsc -p tsconfig.json` (pi types resolved via the local peer dep) |
 | `just test` | `node --test` — native TS, no test framework (needs Node ≥ 23) |
 | `just coverage` | `node --test --experimental-test-coverage` — coverage report |
-| `just link` / `just unlink` | Symlink `extensions/deepseek-peak-offpeak.ts` into `~/.pi/agent/extensions/` (or remove). Legacy dev flow — see Install below |
 | `just pack` | `npm pack --dry-run` — inspect the future tarball |
 
 ## Structure
@@ -43,9 +42,6 @@ Use `just` (recipe bodies run the same npm scripts):
 - `biome.json` — formatter and linter configuration. Biome covers TypeScript,
   JavaScript, JSON, and config files; Markdown and `justfile` prose are not
   formatted by these recipes.
-- `scripts/install.mjs` — link/unlink installer. Uses `os.homedir()` and the
-  script's own location at runtime — **never hardcode user/machine paths in
-  this repo**.
 - `scripts/timezone-matrix.mjs` — expectation tables per forced TZ: fixed
   `Etc/GMT` zones (stable expectations) plus real DST zones with
   transition-scenario assertions.
@@ -64,20 +60,15 @@ pulls latest `main` — push to `main`, run that, restart pi. Pin with
 stable point is wanted. When the npm package ships, swap the settings entry
 for `npm:@khaosoigai/pi-ds-pricing-regime`.
 
-Do not use `just link` while the git package is installed — both would load
-the extension at once (symlink and package are separate identities, no
-deduplication).
+This is the only install path — the old symlink installer
+(`scripts/install.mjs`, `just link`/`just unlink`) has been removed.
 
 ## Worktrees
 
 All tooling config is tracked (justfile, biome.json, tsconfig.json, package.json +
-lockfile), so a `git worktree add` gets identical settings. Two caveats:
-
-- `node_modules/` is untracked — run `npm ci` in each new worktree before
-  `just build`.
-- `just link` / `just unlink` manage the symlink in `~/.pi/agent/extensions/`,
-  which is global state: linking from a worktree overwrites the main
-  checkout's symlink. Only one checkout can be the linked version at a time.
+lockfile), so a `git worktree add` gets identical settings. One caveat:
+`node_modules/` is untracked — run `npm ci` in each new worktree before
+`just build`.
 
 ## Testing notes
 

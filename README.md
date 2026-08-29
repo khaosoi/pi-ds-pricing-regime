@@ -43,16 +43,17 @@ DeepSeek changes the regime.
 
 ## Install
 
-From this repo (development):
+Installed as a pi package from the private GitHub repo (SSH — works because
+the repo is private and SSH keys are configured):
 
 ```sh
-npm install        # dev deps (typescript, @types/node) — once
-npm run link       # symlink extensions/deepseek-peak-offpeak.ts into ~/.pi/agent/extensions/
+pi install git:git@github.com:khaosoi/pi-ds-pricing-regime
 ```
 
-Then run `/reload` inside pi (or restart pi). The extension is auto-discovered
-from the global extensions dir; the symlink keeps the source of truth in this
-repo. `npm run unlink` removes it (any pre-existing file is kept as `*.bak`).
+Pi clones it to `~/.pi/agent/git/github.com/khaosoi/pi-ds-pricing-regime/` and
+runs `npm install` there; restart pi (or `/reload`) to load it. The settings
+entry has no pinned ref, so `pi update --extensions` pulls latest `main`.
+Pin a ref with `pi install git:git@github.com:khaosoi/pi-ds-pricing-regime@<ref>`.
 
 > Alternative: copy `extensions/deepseek-peak-offpeak.ts` into `.pi/extensions/`
 > of a project for a project-local install.
@@ -81,8 +82,6 @@ just typecheck    # tsc against pi's types (resolved via the peer dep in node_mo
 just test         # node:test — unit, smoke, and timezone matrix tests
 just coverage     # run tests with Node's built-in coverage report (100% currently)
 just pack         # npm pack --dry-run: inspect the future tarball
-just link          # symlink into ~/.pi/agent/extensions/
-just unlink        # remove the symlink
 ```
 
 Biome formats and lints TypeScript, JavaScript, JSON, and configuration files.
@@ -124,7 +123,9 @@ When you actually want to release:
 
 1. `npm run preview:package` — confirm the tarball contains only `extensions/`, `LICENSE`, `README.md`
 2. In `package.json`: set `"private": false` (or delete the line), bump `version`
-3. `npm login` (account `khaosoigai`) then `npm publish`
+3. Make the GitHub repo public (npm installs don't need it, but the
+   `repository` links and gallery listing should resolve), then
+   `npm login` (account `khaosoigai`) and `npm publish`
 
 ## Notes
 

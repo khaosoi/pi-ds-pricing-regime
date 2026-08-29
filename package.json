@@ -47,8 +47,6 @@
 		"typecheck": "tsc -p tsconfig.json",
 		"test": "node --test",
 		"coverage": "node --test --experimental-test-coverage",
-		"link": "node scripts/install.mjs link",
-		"unlink": "node scripts/install.mjs unlink",
 		"preview:package": "npm pack --dry-run",
 		"prepublishOnly": "npm run check && npm run typecheck && npm test"
 	},
