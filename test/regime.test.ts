@@ -12,6 +12,7 @@ import {
 	isWeekendBeijing,
 	nextBoundaryUtcHour,
 	nextBoundaryUtc,
+	statusText,
 } from "../extensions/deepseek-peak-offpeak.ts";
 
 test("peak windows are configured as documented", () => {
