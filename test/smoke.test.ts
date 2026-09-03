@@ -373,3 +373,125 @@ test("extension: no stored API key means no balance status and no fetch", async 
 		},
 	);
 });
+
+function proxyRegistry(apiKey: string, baseUrl: string) {
+	return { getProviderAuth: async () => ({ auth: { apiKey, baseUrl } }) };
+}
+
+test("extension: balance endpoint honours a custom baseUrl origin", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, fire } = makePi(DEEPSEEK_MODEL, proxyRegistry("sk-test", "https://proxy.example/v1"));
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+	let fetchCount = 0;
+	await withFetchStub(
+		async (url) => {
+			fetchCount++;
+			assert.equal(url, "https://proxy.example/user/balance"); // origin of the custom baseUrl
+			return balanceResponse("110.00");
+		},
+		async () => {
+			await fire("session_start");
+			await flush();
+			assert.equal(fetchCount, 1);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /¥110/);
+		},
+	);
+});
+
+test("extension: non-2xx balance response leaves the status unset", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, fire } = makePi(DEEPSEEK_MODEL, authRegistry("sk-test"));
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+	await withFetchStub(
+		async () => new Response("rate limited", { status: 429 }),
+		async () => {
+			await fire("session_start");
+			await flush();
+			assert.equal(statuses.has(BALANCE_KEY), false, "no cached value → nothing to show");
+			assert.ok(statuses.get(STATUS_KEY), "regime status unaffected");
+		},
+	);
+});
+
+test("extension: malformed balance body leaves the status unset", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, fire } = makePi(DEEPSEEK_MODEL, authRegistry("sk-test"));
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+	await withFetchStub(
+		async () => new Response(JSON.stringify({ error: "quota" }), { status: 200 }),
+		async () => {
+			await fire("session_start");
+			await flush();
+			assert.equal(statuses.has(BALANCE_KEY), false);
+		},
+	);
+});
+
+test("extension: is_available false flags an affordable balance as low", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, fire } = makePi(DEEPSEEK_MODEL, authRegistry("sk-test"));
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+	await withFetchStub(
+		async () =>
+			new Response(
+				JSON.stringify({ is_available: false, balance_infos: [{ currency: "CNY", total_balance: "500.00" }] }),
+				{ status: 200 },
+			),
+		async () => {
+			await fire("session_start");
+			await flush();
+			assert.match(
+				statuses.get(BALANCE_KEY) ?? "",
+				/^\[warning\]💰 ¥500$/,
+				"credits exist but can't pay → warning",
+			);
+		},
+	);
+});
+
+test("extension: overlapping updates collapse into one in-flight request", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, fire } = makePi(DEEPSEEK_MODEL, authRegistry("sk-test"));
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+	let fetchCount = 0;
+	let resolveFetch!: (response: Response) => void;
+	await withFetchStub(
+		() =>
+			new Promise<Response>((resolve) => {
+				fetchCount++;
+				resolveFetch = resolve;
+			}),
+		async () => {
+			await fire("session_start"); // starts the request, leaves it pending
+			t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime() + BALANCE_REFRESH_MS + 1);
+			await fire("turn_end", {}); // past the throttle window, but a request is in flight
+			await flush();
+			resolveFetch(balanceResponse("110.00"));
+			await flush();
+			assert.equal(fetchCount, 1, "second update must reuse the in-flight request");
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /¥110/);
+		},
+	);
+});
+
+test("extension: model_select falls back to event.model when ctx.model is unset", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, fire, setModel } = makePi(OTHER_MODEL);
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+	// Simulate an early session where the context has no model yet.
+	setModel(undefined);
+	await fire("model_select", { model: DEEPSEEK_MODEL });
+	assert.match(statuses.get(STATUS_KEY) ?? "", /DeepSeek (PEAK|off-peak)/);
+});

@@ -120,17 +120,18 @@ export function formatLocalDayPrefix(now: Date, at: Date): string {
 /**
  * The next regime boundary after `now`, as an absolute UTC instant.
  * Peak → end of the current window; off-peak → start of the next window,
- * scanning forward over UTC days while skipping candidate instants that fall
- * on a live Beijing weekend (the next peak after Friday is Monday 01:00 UTC).
- * Uses `now`'s own date, so the local-time label stays correct even when a
- * DST transition falls between `now` and the boundary.
+ * scanning forward over UTC days (up to `maxScanDays`) while skipping
+ * candidate instants that fall on a live Beijing weekend (the next peak after
+ * Friday is Monday 01:00 UTC). Uses `now`'s own date, so the local-time label
+ * stays correct even when a DST transition falls between `now` and the
+ * boundary.
  */
-export function nextBoundaryUtc(now: Date): Date {
+export function nextBoundaryUtc(now: Date, maxScanDays = 9): Date {
 	const dayStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 	if (inPeak(now)) {
 		return new Date(dayStart + nextBoundaryUtcHour(now) * 3_600_000);
 	}
-	for (let d = 0; d < 9; d++) {
+	for (let d = 0; d < maxScanDays; d++) {
 		const utcDayStart = dayStart + d * DAY_MS;
 		for (const [start] of PEAK_WINDOWS) {
 			const at = utcDayStart + start * 3_600_000;

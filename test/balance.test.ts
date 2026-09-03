@@ -53,6 +53,19 @@ test("formatBalance: symbol currencies render icon + amount", () => {
 	assert.deepEqual(formatBalance({ total: 0.4, currency: "USD" }), { text: "💰 $0.40", low: true });
 });
 
+test("parseBalance: non-string currency falls back to empty", () => {
+	assert.deepEqual(parseBalance({ balance_infos: [{ total_balance: "5", currency: 8 }] }), {
+		total: 5,
+		currency: "",
+		isAvailable: true,
+	});
+});
+
+test("parseBalance: non-object balance entries are rejected", () => {
+	assert.equal(parseBalance({ balance_infos: ["nonsense"] }), undefined);
+	assert.equal(parseBalance({ balance_infos: [null] }), undefined);
+});
+
 test("parseBalance: numeric total_balance is accepted (lenient)", () => {
 	assert.deepEqual(parseBalance({ balance_infos: [{ total_balance: 12, currency: "CNY" }] }), {
 		total: 12,
