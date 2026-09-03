@@ -25,6 +25,28 @@ pricing, so it is meaningless for other providers. Switching models with
 `/model` or `Ctrl+P` clears or restores the status immediately. The provider id
 is a constant (`DEEPSEEK_PROVIDER`) at the top of the extension.
 
+## Pairing with a configurable footer
+
+The extension publishes plain pi statuses (`ctx.ui.setStatus`), so it works
+with the **built-in footer** out of the box — no companion extension required.
+It publishes two keys, sorted alphabetically there:
+
+| Status key | Shows |
+| --- | --- |
+| `zz-deepseek-regime` | `⚡ DeepSeek PEAK — until 12:00 local` (see table above) |
+| `zz-deepseek-balance` | `💰 ¥12.34` — DeepSeek platform credit balance, warning-coloured under the `LOW_BALANCE` thresholds |
+
+For a configurable multi-line footer we recommend
+[pi-footer](https://github.com/wobondar/pi-footer) (`pi install
+npm:pi-footer`). It renders any published status through its `external-status`
+widget, so this extension needs no changes — add widgets keyed to the status
+keys above on their own line, e.g. `Tavily: 73%` (from a usage tracker) →
+regime → balance, ordered exactly as configured and hidden when empty. Hide
+the same keys from pi-footer's automatic extension-status row
+(`extensionStatusRow.hiddenKeys` in `~/.pi/agent/extensions/pi-footer.json`)
+to avoid showing them twice. Removing pi-footer (`pi remove npm:pi-footer`)
+restores the built-in footer with these statuses intact.
+
 ## The regime
 
 Source: [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing)
@@ -107,7 +129,7 @@ process-local virtual timers.
   that land on DST transition instants.
 
 CI (`.github/workflows/ci.yml`) runs formatting/lint checks, typecheck, and
-21 tests on Node 24 for every push/PR.
+41 tests on Node 24 for every push/PR.
 
 ## Publishing checklist (when you're ready)
 
