@@ -137,3 +137,21 @@ test("nextBoundaryUtc: live weekends roll the next peak to Monday 01:00 UTC", ()
 		);
 	}
 });
+
+test("nextBoundaryUtc: throws when the scan finds no window within maxScanDays", (t) => {
+	t.mock.timers.enable({ apis: ["Date"] });
+	t.mock.timers.setTime(new Date("2026-08-28T12:00:00Z").getTime()); // Friday, off-peak
+
+	assert.throws(() => nextBoundaryUtc(new Date(), 0), /no peak window found/);
+	// Production default of 9 days always contains a weekday peak window.
+	assert.ok(nextBoundaryUtc(new Date()) instanceof Date);
+});
+
+test("statusText: weekend before the flat-rate cutoff uses the plain off-peak text", (t) => {
+	t.mock.timers.enable({ apis: ["Date"] });
+	t.mock.timers.setTime(new Date("2026-08-15T18:00:00Z").getTime()); // Saturday in Beijing, before the cutoff
+
+	const { text } = statusText(new Date());
+	assert.match(text, /^🌙 DeepSeek off-peak — next peak/);
+	assert.doesNotMatch(text, /weekend flat rate/);
+});
