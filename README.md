@@ -81,13 +81,13 @@ package is listed with the `pi-package` keyword for the [package gallery](https:
 The source repo can also be installed directly from git:
 
 ```sh
-pi install git:git@github.com:khaosoi/pi-ds-pricing-regime
+pi install git:github.com/khaosoi/pi-ds-pricing-regime
 ```
 
 Pi clones it to `~/.pi/agent/git/github.com/khaosoi/pi-ds-pricing-regime/` and
 runs `npm install` there; restart pi (or `/reload`) to load it. The settings
 entry has no pinned ref, so `pi update --extensions` pulls latest `main`.
-Pin a ref with `pi install git:git@github.com:khaosoi/pi-ds-pricing-regime@<ref>`.
+Pin a ref with `pi install git:github.com/khaosoi/pi-ds-pricing-regime@<ref>`.
 
 > Alternative: copy `extensions/deepseek-peak-offpeak.ts` into `.pi/extensions/`
 > of a project for a project-local install.

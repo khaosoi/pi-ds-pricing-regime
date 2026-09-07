@@ -56,10 +56,10 @@ to `~/.pi/agent/npm/node_modules/@khaosoigai/pi-ds-pricing-regime/`.
 after a release, then restart pi.
 
 An alternative install path is the git package from the GitHub repo
-(`pi install git:git@github.com:khaosoi/pi-ds-pricing-regime`), which clones to
+(`pi install git:github.com/khaosoi/pi-ds-pricing-regime`), which clones to
 `~/.pi/agent/git/github.com/khaosoi/pi-ds-pricing-regime/`, runs `npm install`
 there, and pulls latest `main` unpinned. Pin a ref with
-`pi install git:git@github.com:khaosoi/pi-ds-pricing-regime@<ref>` when a
+`pi install git:github.com/khaosoi/pi-ds-pricing-regime@<ref>` when a
 stable point is wanted.
 
 The old symlink installer (`scripts/install.mjs`, `just link`/`just unlink`)
