@@ -1,63 +1,63 @@
 {
-  "name": "@khaosoigai/pi-ds-pricing-regime",
-  "version": "0.1.1",
-  "description": "Pi extension: shows DeepSeek peak/off-peak billing mode in the footer, timezone-aware",
-  "keywords": [
-    "pi",
-    "pi-package",
-    "pi-extension",
-    "deepseek",
-    "peak",
-    "off-peak",
-    "pricing"
-  ],
-  "license": "MIT",
-  "pi": {
-    "extensions": [
-      "./extensions"
-    ]
-  },
-  "author": {
-    "name": "khaosoigai",
-    "url": "https://github.com/khaosoi"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/khaosoi/pi-ds-pricing-regime.git"
-  },
-  "bugs": {
-    "url": "https://github.com/khaosoi/pi-ds-pricing-regime/issues"
-  },
-  "homepage": "https://github.com/khaosoi/pi-ds-pricing-regime#readme",
-  "type": "module",
-  "files": [
-    "extensions",
-    "LICENSE",
-    "README.md"
-  ],
-  "engines": {
-    "node": ">=23"
-  },
-  "scripts": {
-    "format": "biome format extensions test scripts package.json tsconfig.json biome.json --write",
-    "format:check": "biome format extensions test scripts package.json tsconfig.json biome.json",
-    "lint": "biome lint extensions test scripts package.json tsconfig.json biome.json",
-    "check": "npm run format:check && npm run lint",
-    "typecheck": "tsc -p tsconfig.json",
-    "test": "node --test",
-    "coverage": "node --test --experimental-test-coverage",
-    "preview:package": "npm pack --dry-run",
-    "prepublishOnly": "npm run check && npm run typecheck && npm test"
-  },
-  "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "*"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.5.8",
-    "@types/node": "^22.10.0",
-    "typescript": "^5.7.0"
-  }
+	"name": "@khaosoigai/pi-ds-pricing-regime",
+	"version": "0.1.1",
+	"description": "Pi extension: shows DeepSeek peak/off-peak billing mode in the footer, timezone-aware",
+	"keywords": [
+		"pi",
+		"pi-package",
+		"pi-extension",
+		"deepseek",
+		"peak",
+		"off-peak",
+		"pricing"
+	],
+	"license": "MIT",
+	"pi": {
+		"extensions": [
+			"./extensions"
+		]
+	},
+	"author": {
+		"name": "khaosoigai",
+		"url": "https://github.com/khaosoi"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/khaosoi/pi-ds-pricing-regime.git"
+	},
+	"bugs": {
+		"url": "https://github.com/khaosoi/pi-ds-pricing-regime/issues"
+	},
+	"homepage": "https://github.com/khaosoi/pi-ds-pricing-regime#readme",
+	"type": "module",
+	"files": [
+		"extensions",
+		"LICENSE",
+		"README.md"
+	],
+	"engines": {
+		"node": ">=23"
+	},
+	"scripts": {
+		"format": "biome format extensions test scripts package.json tsconfig.json biome.json --write",
+		"format:check": "biome format extensions test scripts package.json tsconfig.json biome.json",
+		"lint": "biome lint extensions test scripts package.json tsconfig.json biome.json",
+		"check": "npm run format:check && npm run lint",
+		"typecheck": "tsc -p tsconfig.json",
+		"test": "node --test",
+		"coverage": "node --test --experimental-test-coverage",
+		"preview:package": "npm pack --dry-run",
+		"prepublishOnly": "npm run check && npm run typecheck && npm test"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": "*"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.8",
+		"@types/node": "^22.10.0",
+		"typescript": "^5.7.0"
+	}
 }
