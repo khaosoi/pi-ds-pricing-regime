@@ -4,8 +4,7 @@ A [pi](https://github.com/earendil-works/pi-coding-agent) extension that always
 shows DeepSeek's peak/off-peak billing mode in the footer (bottom-left),
 timezone-aware, while the selected model comes from the DeepSeek provider
 (`ctx.model.provider === "deepseek"`); other providers hide the status.
-Installed globally as a git package from the private GitHub repo — see
-Install below.
+Installed globally as an npm package — see Install below.
 
 ## Commands
 
@@ -50,18 +49,21 @@ Use `just` (recipe bodies run the same npm scripts):
 
 ## Install
 
-Installed as a **git package** from the private repo
-`git:git@github.com:khaosoi/pi-ds-pricing-regime` (SSH; entry lives in the
-`packages` array in `~/.pi/agent/settings.json`). Pi clones it to
-`~/.pi/agent/git/github.com/khaosoi/pi-ds-pricing-regime/` and runs
-`npm install` there. The entry has no pinned ref, so `pi update --extensions`
-pulls latest `main` — push to `main`, run that, restart pi. Pin with
-`pi install git:git@github.com:khaosoi/pi-ds-pricing-regime@<ref>` when a
-stable point is wanted. When the npm package ships, swap the settings entry
-for `npm:@khaosoigai/pi-ds-pricing-regime`.
+Installed as an **npm package** (`npm:@khaosoigai/pi-ds-pricing-regime`; entry
+lives in the `packages` array in `~/.pi/agent/settings.json`). Pi installs it
+to `~/.pi/agent/npm/node_modules/@khaosoigai/pi-ds-pricing-regime/`.
+`pi update --extensions` upgrades it to the latest published version; run that
+after a release, then restart pi.
 
-This is the only install path — the old symlink installer
-(`scripts/install.mjs`, `just link`/`just unlink`) has been removed.
+An alternative install path is the git package from the private repo
+(`pi install git:git@github.com:khaosoi/pi-ds-pricing-regime`), which clones to
+`~/.pi/agent/git/github.com/khaosoi/pi-ds-pricing-regime/`, runs `npm install`
+there, and pulls latest `main` unpinned. Pin a ref with
+`pi install git:git@github.com:khaosoi/pi-ds-pricing-regime@<ref>` when a
+stable point is wanted.
+
+The old symlink installer (`scripts/install.mjs`, `just link`/`just unlink`)
+has been removed.
 
 ## Worktrees
 
@@ -83,13 +85,15 @@ lockfile), so a `git worktree add` gets identical settings. One caveat:
 
 ## Publishing (do NOT do without explicit user go-ahead)
 
-Currently `"private": true` as an accidental-publish guard. Release checklist
-(documented in README):
+v0.1.0 is published to npm as `@khaosoigai/pi-ds-pricing-regime`. Release
+checklist for a new version (documented in README):
 
 1. `just pack` — confirm tarball contents
-2. Set `"private": false` (or delete the line), bump `version`
-3. `npm login` (account `khaosoigai`), then `npm publish`
-   (`prepublishOnly` runs check, typecheck, and tests)
+2. Bump `version` in `package.json`
+3. Merge to `main` and tag the release
+4. `npm login` (account `khaosoigai`), then `npm publish`
+   (`prepublishOnly` runs check, typecheck, and tests; 2FA browser
+   authentication is required)
 
 Public identities: GitHub/git = `khaosoi`, npm = `khaosoigai`. Commits are
 authored by the global git config (`khaosoi <165171671+khaosoi@users.noreply.github.com>`);
