@@ -66,8 +66,20 @@ DeepSeek changes the regime.
 
 ## Install
 
-Installed as a pi package from the private GitHub repo (SSH — works because
-the repo is private and SSH keys are configured):
+Install as a pi package from npm:
+
+```sh
+pi install npm:@khaosoigai/pi-ds-pricing-regime
+```
+
+The package is structured as a pi package: `package.json` declares a
+[`pi` manifest](https://pi.dev/docs/packages) loading `./extensions`, and the
+package is listed with the `pi-package` keyword for the [package gallery](https://pi.dev/packages).
+
+### From git (alternative)
+
+The source repo can also be installed directly over SSH (works because the
+repo is private and SSH keys are configured):
 
 ```sh
 pi install git:git@github.com:khaosoi/pi-ds-pricing-regime
@@ -80,18 +92,6 @@ Pin a ref with `pi install git:git@github.com:khaosoi/pi-ds-pricing-regime@<ref>
 
 > Alternative: copy `extensions/deepseek-peak-offpeak.ts` into `.pi/extensions/`
 > of a project for a project-local install.
-
-### From npm (future)
-
-Once published, it installs as a pi package:
-
-```sh
-pi install npm:@khaosoigai/pi-ds-pricing-regime
-```
-
-The package is structured as a pi package: `package.json` declares a
-[`pi` manifest](https://pi.dev/docs/packages) loading `./extensions`, and the
-package is listed with the `pi-package` keyword for the [package gallery](https://pi.dev/packages).
 
 ## Development
 
@@ -131,10 +131,10 @@ process-local virtual timers.
 CI (`.github/workflows/ci.yml`) runs formatting/lint checks, typecheck, and
 41 tests on Node 24 for every push/PR.
 
-## Publishing checklist (when you're ready)
+## Publishing
 
-Nothing is published yet — `package.json` still has `"private": true` as a
-guard. The metadata for a future public release is already in place:
+The package is published to npm as `@khaosoigai/pi-ds-pricing-regime`. The
+metadata is already in place:
 
 - scoped name `@khaosoigai/pi-ds-pricing-regime` (name reserved to your npm account)
 - MIT license (`LICENSE` + `license` field)
@@ -143,14 +143,14 @@ guard. The metadata for a future public release is already in place:
 - `publishConfig.access: "public"` so the scoped package publishes publicly
 - `prepublishOnly` gate: runs typecheck + tests before every publish
 
-When you actually want to release:
+To release a new version:
 
 1. `npm run preview:package` — confirm the tarball contains only `extensions/`,
    `LICENSE`, `README.md`
-2. In `package.json`: set `"private": false` (or delete the line), bump `version`
-3. Make the GitHub repo public (npm installs don't need it, but the
-   `repository` links and gallery listing should resolve), then
-   `npm login` (account `khaosoigai`) and `npm publish`
+2. Bump `version` in `package.json`
+3. Merge to `main` and tag the release
+4. `npm login` (account `khaosoigai`) and `npm publish` — the `prepublishOnly`
+   gate re-runs check, typecheck, and tests as the final safety net
 
 ## Notes
 
