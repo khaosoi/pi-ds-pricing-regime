@@ -78,8 +78,7 @@ package is listed with the `pi-package` keyword for the [package gallery](https:
 
 ### From git (alternative)
 
-The source repo can also be installed directly over SSH (works because the
-repo is private and SSH keys are configured):
+The source repo can also be installed directly from git:
 
 ```sh
 pi install git:git@github.com:khaosoi/pi-ds-pricing-regime

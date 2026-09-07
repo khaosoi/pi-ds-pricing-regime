@@ -55,7 +55,7 @@ to `~/.pi/agent/npm/node_modules/@khaosoigai/pi-ds-pricing-regime/`.
 `pi update --extensions` upgrades it to the latest published version; run that
 after a release, then restart pi.
 
-An alternative install path is the git package from the private repo
+An alternative install path is the git package from the GitHub repo
 (`pi install git:git@github.com:khaosoi/pi-ds-pricing-regime`), which clones to
 `~/.pi/agent/git/github.com/khaosoi/pi-ds-pricing-regime/`, runs `npm install`
 there, and pulls latest `main` unpinned. Pin a ref with
