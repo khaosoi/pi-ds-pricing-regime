@@ -65,6 +65,21 @@ stable point is wanted.
 The old symlink installer (`scripts/install.mjs`, `just link`/`just unlink`)
 has been removed.
 
+## Git workflow (branch protection on `main`)
+
+The source repo (`github.com/khaosoi/pi-ds-pricing-regime`, public) protects
+`main` with the "Protect main" ruleset: pushes must go through a pull request
+(no approvals required), and force pushes and branch deletion are blocked.
+**Never push directly to `main`** — it will be rejected. Instead:
+
+1. Branch from `main`, commit, push the branch.
+2. `gh pr create`, then `gh pr merge --squash --delete-branch` (solo dev;
+   self-merge is allowed since zero approvals are required).
+3. `git fetch --prune` locally to drop the merged branch ref.
+
+Note: `gh pr review --approve` on your own PR is rejected by GitHub (self
+approval is impossible as the sole collaborator) — merge directly instead.
+
 ## Worktrees
 
 All tooling config is tracked (justfile, biome.json, tsconfig.json, package.json +
