@@ -180,7 +180,7 @@ export function parseBalance(body: unknown): { total: number; currency: string; 
 }
 
 /**
- * The rendered balance status: "💰 ¥12.34", low-balances in the theme's
+ * The rendered balance status: "¥12.34", low-balances in the theme's
  * warning colour. Precision: integers lose the decimals ("¥12"), anything
  * else keeps two. Unknown currencies render as "12.34 EUR".
  */
@@ -191,7 +191,7 @@ export function formatBalance(balance: { total: number; currency: string }): {
 	const { total, currency } = balance;
 	const amount = Number.isInteger(total) ? String(total) : total.toFixed(2);
 	const symbol = CURRENCY_SYMBOLS[currency];
-	const text = symbol ? `💰 ${symbol}${amount}` : `💰 ${amount}${currency ? ` ${currency}` : ""}`;
+	const text = symbol ? `${symbol}${amount}` : `${amount}${currency ? ` ${currency}` : ""}`;
 	const threshold = LOW_BALANCE[currency] ?? FALLBACK_LOW_BALANCE;
 	return { text, low: total < threshold };
 }
@@ -201,17 +201,17 @@ export function statusText(now: Date): { text: string; color: "warning" | "succe
 	const boundary = nextBoundaryUtc(now);
 	const label = `${formatLocalDayPrefix(now, boundary)}${formatLocalTime(boundary)}`;
 	if (inPeak(now)) {
-		return { color: "warning", text: `⚡ DeepSeek PEAK — until ${label} local` };
+		return { color: "warning", text: `DeepSeek PEAK — until ${label} local` };
 	}
 	if (now.getTime() >= WEEKEND_OFFPEAK_UTC && isWeekendBeijing(now)) {
 		return {
 			color: "success",
-			text: `🌙 DeepSeek off-peak (weekend flat rate) — next peak ${label} local`,
+			text: `DeepSeek off-peak (weekend flat rate) — next peak ${label} local`,
 		};
 	}
 	return {
 		color: "success",
-		text: `🌙 DeepSeek off-peak — next peak ${label} local`,
+		text: `DeepSeek off-peak — next peak ${label} local`,
 	};
 }
 

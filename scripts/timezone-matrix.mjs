@@ -30,33 +30,33 @@ const tz = process.env.TZ ?? "(unset)";
 //   Etc/GMT+5 (UTC-5):  peak 20:00–23:00, 01:00–05:00
 const TABLES = {
 	"Etc/GMT-8": [
-		[0, false, "09:00", "🌙 DeepSeek off-peak — next peak 09:00 local"],
-		[1, true, "12:00", "⚡ DeepSeek PEAK — until 12:00 local"],
-		[3, true, "12:00", "⚡ DeepSeek PEAK — until 12:00 local"],
-		[5, false, "14:00", "🌙 DeepSeek off-peak — next peak 14:00 local"],
-		[6, true, "18:00", "⚡ DeepSeek PEAK — until 18:00 local"],
-		[9, true, "18:00", "⚡ DeepSeek PEAK — until 18:00 local"],
+		[0, false, "09:00", "DeepSeek off-peak — next peak 09:00 local"],
+		[1, true, "12:00", "DeepSeek PEAK — until 12:00 local"],
+		[3, true, "12:00", "DeepSeek PEAK — until 12:00 local"],
+		[5, false, "14:00", "DeepSeek off-peak — next peak 14:00 local"],
+		[6, true, "18:00", "DeepSeek PEAK — until 18:00 local"],
+		[9, true, "18:00", "DeepSeek PEAK — until 18:00 local"],
 		// 19:00 local Monday → next peak is tomorrow (Tuesday) 09:00 local.
-		[11, false, "09:00", "🌙 DeepSeek off-peak — next peak Tuesday 09:00 local"],
+		[11, false, "09:00", "DeepSeek off-peak — next peak Tuesday 09:00 local"],
 	],
 	"Etc/GMT-10": [
-		[0, false, "11:00", "🌙 DeepSeek off-peak — next peak 11:00 local"],
-		[1, true, "14:00", "⚡ DeepSeek PEAK — until 14:00 local"],
-		[3, true, "14:00", "⚡ DeepSeek PEAK — until 14:00 local"],
-		[5, false, "16:00", "🌙 DeepSeek off-peak — next peak 16:00 local"],
-		[6, true, "20:00", "⚡ DeepSeek PEAK — until 20:00 local"],
-		[9, true, "20:00", "⚡ DeepSeek PEAK — until 20:00 local"],
+		[0, false, "11:00", "DeepSeek off-peak — next peak 11:00 local"],
+		[1, true, "14:00", "DeepSeek PEAK — until 14:00 local"],
+		[3, true, "14:00", "DeepSeek PEAK — until 14:00 local"],
+		[5, false, "16:00", "DeepSeek off-peak — next peak 16:00 local"],
+		[6, true, "20:00", "DeepSeek PEAK — until 20:00 local"],
+		[9, true, "20:00", "DeepSeek PEAK — until 20:00 local"],
 		// 21:00 local Monday → next peak is tomorrow (Tuesday) 11:00 local.
-		[11, false, "11:00", "🌙 DeepSeek off-peak — next peak Tuesday 11:00 local"],
+		[11, false, "11:00", "DeepSeek off-peak — next peak Tuesday 11:00 local"],
 	],
 	"Etc/GMT+5": [
-		[0, false, "20:00", "🌙 DeepSeek off-peak — next peak 20:00 local"],
-		[1, true, "23:00", "⚡ DeepSeek PEAK — until 23:00 local"],
-		[3, true, "23:00", "⚡ DeepSeek PEAK — until 23:00 local"],
-		[5, false, "01:00", "🌙 DeepSeek off-peak — next peak 01:00 local"],
-		[6, true, "05:00", "⚡ DeepSeek PEAK — until 05:00 local"],
-		[9, true, "05:00", "⚡ DeepSeek PEAK — until 05:00 local"],
-		[11, false, "20:00", "🌙 DeepSeek off-peak — next peak 20:00 local"],
+		[0, false, "20:00", "DeepSeek off-peak — next peak 20:00 local"],
+		[1, true, "23:00", "DeepSeek PEAK — until 23:00 local"],
+		[3, true, "23:00", "DeepSeek PEAK — until 23:00 local"],
+		[5, false, "01:00", "DeepSeek off-peak — next peak 01:00 local"],
+		[6, true, "05:00", "DeepSeek PEAK — until 05:00 local"],
+		[9, true, "05:00", "DeepSeek PEAK — until 05:00 local"],
+		[11, false, "20:00", "DeepSeek off-peak — next peak 20:00 local"],
 	],
 };
 
@@ -68,43 +68,43 @@ const TABLES = {
 const DST_SCENARIOS = {
 	"Etc/GMT-8": [
 		// Friday 20:00 HKT off-peak → the whole weekend is skipped.
-		["2026-08-28T12:00:00Z", "🌙 DeepSeek off-peak — next peak Monday 09:00 local"],
+		["2026-08-28T12:00:00Z", "DeepSeek off-peak — next peak Monday 09:00 local"],
 		// Sunday 02:00 HKT → weekend flat rate, next peak Monday 09:00 local.
-		["2026-08-22T18:00:00Z", "🌙 DeepSeek off-peak (weekend flat rate) — next peak Monday 09:00 local"],
+		["2026-08-22T18:00:00Z", "DeepSeek off-peak (weekend flat rate) — next peak Monday 09:00 local"],
 		// Saturday 09:39 HKT → still the whole weekend ahead; the label must say
 		// Monday so 09:00 is not mistaken for today's clock time.
-		["2026-08-29T01:39:00Z", "🌙 DeepSeek off-peak (weekend flat rate) — next peak Monday 09:00 local"],
+		["2026-08-29T01:39:00Z", "DeepSeek off-peak (weekend flat rate) — next peak Monday 09:00 local"],
 	],
 	"Etc/GMT-10": [
 		// Sunday 10:00 AEST → weekend flat rate, next peak Monday 01:00Z = Monday 11:00 local.
-		["2026-08-23T00:00:00Z", "🌙 DeepSeek off-peak (weekend flat rate) — next peak Monday 11:00 local"],
+		["2026-08-23T00:00:00Z", "DeepSeek off-peak (weekend flat rate) — next peak Monday 11:00 local"],
 	],
 	"Etc/GMT+5": [
 		// Saturday 13:00 local (after the 16:00Z rule start) → weekend flat rate;
 		// next peak Monday 01:00Z lands on *Sunday* 20:00 local, and the label
 		// shows the boundary's local weekday.
-		["2026-08-22T18:00:00Z", "🌙 DeepSeek off-peak (weekend flat rate) — next peak Sunday 20:00 local"],
+		["2026-08-22T18:00:00Z", "DeepSeek off-peak (weekend flat rate) — next peak Sunday 20:00 local"],
 	],
 	"America/New_York": [
 		// Sunday across the fall-back instant: 05:30Z Nov 1 = 01:30 EDT; the next
 		// peak (Monday 01:00Z) is labeled 20:00 EST on the *previous* date.
-		["2026-11-01T05:30:00Z", "🌙 DeepSeek off-peak (weekend flat rate) — next peak 20:00 local"],
+		["2026-11-01T05:30:00Z", "DeepSeek off-peak (weekend flat rate) — next peak 20:00 local"],
 		// Late UTC Sunday evening is already Monday in Beijing (23:30Z = 18:30 EST
 		// Sunday local, but Monday 07:30 Beijing) → normal weekday off-peak.
-		["2026-11-01T23:30:00Z", "🌙 DeepSeek off-peak — next peak 20:00 local"],
+		["2026-11-01T23:30:00Z", "DeepSeek off-peak — next peak 20:00 local"],
 		// Monday morning after fall-back: 05:30Z = 00:30 EST; next peak 06:00Z = 01:00 EST.
-		["2026-11-02T05:30:00Z", "🌙 DeepSeek off-peak — next peak 01:00 local"],
+		["2026-11-02T05:30:00Z", "DeepSeek off-peak — next peak 01:00 local"],
 		// Spring-forward Sunday: 07:30Z Mar 14 = 03:30 EDT; next peak Mon 01:00Z = Sun 21:00 EDT.
-		["2027-03-14T07:30:00Z", "🌙 DeepSeek off-peak (weekend flat rate) — next peak 21:00 local"],
+		["2027-03-14T07:30:00Z", "DeepSeek off-peak (weekend flat rate) — next peak 21:00 local"],
 		// Spring-forward Monday sanity: 07:30Z Mar 15 = 03:30 EDT, peak until 10:00Z = 06:00 EDT.
-		["2027-03-15T07:30:00Z", "⚡ DeepSeek PEAK — until 06:00 local"],
+		["2027-03-15T07:30:00Z", "DeepSeek PEAK — until 06:00 local"],
 	],
 	"Australia/Sydney": [
 		// Sydney Saturday fall-back: the next peak (Monday 01:00Z Apr 5 = 11:00
 		// AEST Apr 5) is a different local date → labelled Monday.
-		["2027-04-03T23:30:00Z", "🌙 DeepSeek off-peak (weekend flat rate) — next peak Monday 11:00 local"],
+		["2027-04-03T23:30:00Z", "DeepSeek off-peak (weekend flat rate) — next peak Monday 11:00 local"],
 		// Monday sanity after the transition: 04:30Z Apr 5 = 14:30 AEST, off-peak until 06:00Z = 16:00 AEST.
-		["2027-04-05T04:30:00Z", "🌙 DeepSeek off-peak — next peak 16:00 local"],
+		["2027-04-05T04:30:00Z", "DeepSeek off-peak — next peak 16:00 local"],
 	],
 };
 

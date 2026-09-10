@@ -9,9 +9,9 @@ display in the machine's local timezone — nothing is hardcoded.
 
 | State | Footer text (bottom-left) |
 | --- | --- |
-| Peak hours | `⚡ DeepSeek PEAK — until 12:00 local` (amber) |
-| Off-peak | `🌙 DeepSeek off-peak — next peak 09:00 local` (green) |
-| Weekend (Beijing time) | `🌙 DeepSeek off-peak (weekend flat rate) — next peak Monday 09:00 local` (green) |
+| Peak hours | `DeepSeek PEAK — until 12:00 local` (amber) |
+| Off-peak | `DeepSeek off-peak — next peak 09:00 local` (green) |
+| Weekend (Beijing time) | `DeepSeek off-peak (weekend flat rate) — next peak Monday 09:00 local` (green) |
 
 When the next boundary is not today (e.g. on a weekend morning), the label
 includes the boundary's local weekday so `09:00` is not mistaken for today's
@@ -33,8 +33,8 @@ It publishes two keys, sorted alphabetically there:
 
 | Status key | Shows |
 | --- | --- |
-| `zz-deepseek-regime` | `⚡ DeepSeek PEAK — until 12:00 local` (see table above) |
-| `zz-deepseek-balance` | `💰 ¥12.34` — DeepSeek platform credit balance, warning-coloured under the `LOW_BALANCE` thresholds |
+| `zz-deepseek-regime` | `DeepSeek PEAK — until 12:00 local` (see table above) |
+| `zz-deepseek-balance` | `¥12.34` — DeepSeek platform credit balance, warning-coloured under the `LOW_BALANCE` thresholds |
 
 For a configurable multi-line footer we recommend
 [pi-footer](https://github.com/wobondar/pi-footer) (`pi install
