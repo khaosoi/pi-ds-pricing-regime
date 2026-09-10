@@ -1,6 +1,6 @@
 {
 	"name": "@khaosoigai/pi-ds-pricing-regime",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Pi extension: shows DeepSeek peak/off-peak billing mode in the footer, timezone-aware",
 	"keywords": [
 		"pi",
