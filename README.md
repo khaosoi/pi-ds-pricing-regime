@@ -64,6 +64,20 @@ All are constants at the top of
 (`PEAK_WINDOWS`, `WEEKEND_OFFPEAK_UTC`, `DEEPSEEK_PROVIDER`) — edit them if
 DeepSeek changes the regime.
 
+## Pricing
+
+The Flash series was repriced effective `2026-09-10T04:00:00Z` (12:00 Beijing
+on 2026-09-10). Per 1M tokens:
+
+| | Input (cache hit) | Input (cache miss) | Output |
+| --- | --- | --- | --- |
+| Off-peak | $0.003 | $0.15 | $0.60 |
+| Peak (double) | $0.006 | $0.30 | $1.20 |
+
+`deepseek-v4-flash` (internally V4.1-Flash) is the only served model: V4 Pro
+and the experimental vision model are deprecated. The peak/off-peak windows
+and the weekend flat-rate rule are unchanged by the repricing.
+
 ## Install
 
 Install as a pi package from npm:
