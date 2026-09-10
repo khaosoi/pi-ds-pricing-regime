@@ -48,9 +48,9 @@ test("parseBalance: malformed bodies return undefined", () => {
 });
 
 test("formatBalance: symbol currencies render icon + amount", () => {
-	assert.deepEqual(formatBalance({ total: 110, currency: "CNY" }), { text: "💰 ¥110", low: false });
-	assert.deepEqual(formatBalance({ total: 12.345, currency: "USD" }), { text: "💰 $12.35", low: false });
-	assert.deepEqual(formatBalance({ total: 0.4, currency: "USD" }), { text: "💰 $0.40", low: true });
+	assert.deepEqual(formatBalance({ total: 110, currency: "CNY" }), { text: "¥110", low: false });
+	assert.deepEqual(formatBalance({ total: 12.345, currency: "USD" }), { text: "$12.35", low: false });
+	assert.deepEqual(formatBalance({ total: 0.4, currency: "USD" }), { text: "$0.40", low: true });
 });
 
 test("parseBalance: non-string currency falls back to empty", () => {
@@ -76,11 +76,11 @@ test("parseBalance: numeric total_balance is accepted (lenient)", () => {
 
 test("formatBalance: unknown currencies render 'amount CODE'", () => {
 	// 12 is above the fallback threshold, so not low.
-	assert.deepEqual(formatBalance({ total: 12, currency: "EUR" }), { text: "💰 12 EUR", low: false });
+	assert.deepEqual(formatBalance({ total: 12, currency: "EUR" }), { text: "12 EUR", low: false });
 });
 
 test("formatBalance: no currency renders just the amount", () => {
-	assert.deepEqual(formatBalance({ total: 12, currency: "" }), { text: "💰 12", low: false });
+	assert.deepEqual(formatBalance({ total: 12, currency: "" }), { text: "12", low: false });
 });
 
 test("formatBalance: low-balance thresholds per currency", () => {

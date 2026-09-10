@@ -153,6 +153,6 @@ test("statusText: weekend before the flat-rate cutoff uses the plain off-peak te
 	t.mock.timers.setTime(new Date("2026-08-15T18:00:00Z").getTime()); // Saturday in Beijing, before the cutoff
 
 	const { text } = statusText(new Date());
-	assert.match(text, /^🌙 DeepSeek off-peak — next peak/);
+	assert.match(text, /^DeepSeek off-peak — next peak/);
 	assert.doesNotMatch(text, /weekend flat rate/);
 });

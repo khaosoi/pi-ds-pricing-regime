@@ -63,7 +63,7 @@ test("statusText: peak window", (t) => {
 
 	const { text, color } = statusText(new Date());
 	assert.equal(color, "warning");
-	assert.match(text, new RegExp(`^⚡ DeepSeek PEAK — until ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
+	assert.match(text, new RegExp(`^DeepSeek PEAK — until ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
 });
 
 test("statusText: off-peak window", (t) => {
@@ -72,7 +72,7 @@ test("statusText: off-peak window", (t) => {
 
 	const { text, color } = statusText(new Date());
 	assert.equal(color, "success");
-	assert.match(text, new RegExp(`^🌙 DeepSeek off-peak — next peak ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
+	assert.match(text, new RegExp(`^DeepSeek off-peak — next peak ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
 });
 
 test("statusText: weekend flat rate", (t) => {
@@ -83,7 +83,7 @@ test("statusText: weekend flat rate", (t) => {
 	assert.equal(color, "success");
 	assert.match(
 		text,
-		new RegExp(`^🌙 DeepSeek off-peak \\(weekend flat rate\\) — next peak ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`),
+		new RegExp(`^DeepSeek off-peak \\(weekend flat rate\\) — next peak ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`),
 	);
 });
 
@@ -104,7 +104,7 @@ test("extension: session_start sets status and schedules refresh; shutdown clean
 	assert.equal(statuses.size, 1);
 	const text = statuses.get(STATUS_KEY);
 	assert.ok(text, "expected a status for key 'deepseek'");
-	assert.match(text, new RegExp(`^\\[warning\\]⚡ DeepSeek PEAK — until ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
+	assert.match(text, new RegExp(`^\\[warning\\]DeepSeek PEAK — until ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
 
 	// The interval re-renders the status every REFRESH_MS (30s).
 	const before = calls.setStatus;
@@ -221,7 +221,7 @@ test("extension: session_start fetches the balance and publishes it", async (t) 
 		async () => {
 			await fire("session_start");
 			await flush();
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[success\]💰 ¥110$/);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[success\]¥110$/);
 			assert.equal(statuses.size, 2, "regime + balance statuses both present");
 		},
 	);
@@ -267,7 +267,7 @@ test("extension: low balance renders in the warning colour", async (t) => {
 		async () => {
 			await fire("session_start");
 			await flush();
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[warning\]💰 ¥3\.50$/);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[warning\]¥3\.50$/);
 		},
 	);
 });
@@ -448,11 +448,7 @@ test("extension: is_available false flags an affordable balance as low", async (
 		async () => {
 			await fire("session_start");
 			await flush();
-			assert.match(
-				statuses.get(BALANCE_KEY) ?? "",
-				/^\[warning\]💰 ¥500$/,
-				"credits exist but can't pay → warning",
-			);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[warning\]¥500$/, "credits exist but can't pay → warning");
 		},
 	);
 });
