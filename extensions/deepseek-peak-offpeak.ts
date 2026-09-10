@@ -23,6 +23,13 @@
  *   Since 2026-08-22T16:00:00Z (= 2026-08-23 00:00 Beijing), Saturdays and
  *   Sundays (Beijing calendar time) have no peak tiers at all: every call
  *   is billed at the uniform off-peak rate.
+ *
+ *   Flash series pricing effective 2026-09-10T04:00:00Z (= 12:00 Beijing on
+ *   2026-09-10), per 1M tokens, off-peak: $0.003 input cache hit, $0.15
+ *   input cache miss, $0.60 output. Peak hours are exactly double
+ *   ($0.006 / $0.30 / $1.20). `deepseek-v4-flash` (internally V4.1-Flash) is
+ *   now the only served model: V4 Pro and the experimental vision model are
+ *   deprecated.
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
