@@ -25,9 +25,11 @@ Use `just` (recipe bodies run the same npm scripts):
 ## Structure
 
 - `extensions/deepseek-peak-offpeak.ts` — the extension. **Constants live at the
-  top**: `PEAK_WINDOWS` (peak hours, `[start, end)` UTC), `WEEKEND_OFFPEAK_UTC`
-  (weekend flat-rate start; Sat/Sun Beijing time is off-peak all day from then;
-  the tiered regime itself has been live since 2026-08-16T16:00:00Z), and
+  top**: `PEAK_WINDOWS` (peak hours, `[start, end)` UTC: `01:00–04:00` and
+  `06:00–09:00`, i.e. 09:00–12:00 and 14:00–17:00 Beijing), `WEEKEND_OFFPEAK_UTC`
+  (weekend flat-rate start; Sat/Sun Beijing time is off-peak all day from then,
+  which makes the off-peak block Friday 17:00 → Monday 09:00 Beijing; the tiered
+  regime itself has been live since 2026-08-16T16:00:00Z), and
   `DEEPSEEK_PROVIDER` (the provider id that gates visibility). If
   DeepSeek changes the regime, edit here. Pure helpers (`inPeak`,
   `isWeekendBeijing`, `nextBoundaryUtcHour`, `nextBoundaryUtc`, `formatLocalTime`,
