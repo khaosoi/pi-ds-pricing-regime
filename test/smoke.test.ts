@@ -13,12 +13,24 @@ import ext, {
 	BALANCE_KEY,
 	BALANCE_REFRESH_MS,
 	isDeepSeekModel,
+	SPEND_KEY,
 	STATUS_KEY,
 	statusText,
 } from "../extensions/deepseek-peak-offpeak.ts";
 
 const DEEPSEEK_MODEL = { provider: "deepseek", id: "deepseek-chat" };
 const OTHER_MODEL = { provider: "opencode-go", id: "glm-5.3-flash" };
+
+/** An assistant message entry with a recorded cost, as pi stores it on the branch. */
+function spendEntry(total: number, timestamp: number, provider = "deepseek") {
+	return {
+		type: "message",
+		id: `m-${timestamp}`,
+		parentId: null,
+		timestamp: new Date(timestamp).toISOString(),
+		message: { role: "assistant", provider, model: "deepseek-flash", timestamp, usage: { cost: { total } } },
+	};
+}
 
 type StatusMap = Map<string, string>;
 
@@ -33,9 +45,12 @@ function makePi(model: unknown = DEEPSEEK_MODEL, modelRegistry?: unknown) {
 		},
 	};
 
+	const entries: unknown[] = [];
+
 	const ctx = {
 		model,
 		modelRegistry,
+		sessionManager: { getBranch: () => entries },
 		ui: {
 			theme: {
 				fg: (color: string, text: string) => `[${color}]${text}`,
@@ -52,7 +67,7 @@ function makePi(model: unknown = DEEPSEEK_MODEL, modelRegistry?: unknown) {
 		for (const h of handlers.get(event) ?? []) await h(e, ctx);
 	};
 
-	return { pi, ctx, statuses, calls, fire, handlers, setModel: (m: unknown) => (ctx.model = m) };
+	return { pi, ctx, statuses, calls, entries, fire, handlers, setModel: (m: unknown) => (ctx.model = m) };
 }
 
 const OPTIONAL_DAY = "(?:[A-Z][a-z]+ )?"; // weekday prefix when the boundary is not today
@@ -101,7 +116,7 @@ test("extension: session_start sets status and schedules refresh; shutdown clean
 	ext(pi as unknown as Parameters<typeof ext>[0]);
 
 	await fire("session_start");
-	assert.equal(statuses.size, 1);
+	assert.equal(statuses.size, 2, "regime + spend statuses");
 	const text = statuses.get(STATUS_KEY);
 	assert.ok(text, "expected a status for key 'deepseek'");
 	assert.match(text, new RegExp(`^\\[warning\\]DeepSeek PEAK — until ${OPTIONAL_DAY}\\d{2}:\\d{2} local$`));
@@ -140,9 +155,11 @@ test("extension: no status when the selected model is not from the deepseek prov
 	ext(pi as unknown as Parameters<typeof ext>[0]);
 
 	await fire("session_start");
-	assert.equal(statuses.size, 0, "non-deepseek model must not show the status");
+	assert.equal(statuses.has(STATUS_KEY), false, "non-deepseek model must not show the status");
+	assert.equal(statuses.has(BALANCE_KEY), false);
 	t.mock.timers.tick(60_000);
-	assert.equal(statuses.size, 0, "interval must keep the status hidden");
+	assert.equal(statuses.has(STATUS_KEY), false, "interval must keep the status hidden");
+	assert.ok(statuses.get(SPEND_KEY), "spend is published for every provider");
 	assert.equal(calls.setStatus > 0, true, "interval still runs, clearing defensively");
 
 	// Switching to a deepseek model turns the status on without a restart.
@@ -222,7 +239,7 @@ test("extension: session_start fetches the balance and publishes it", async (t) 
 			await fire("session_start");
 			await flush();
 			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[success\]¥110$/);
-			assert.equal(statuses.size, 2, "regime + balance statuses both present");
+			assert.equal(statuses.size, 3, "regime + balance + spend statuses present");
 		},
 	);
 	assert.equal(fetchCount, 1);
@@ -317,7 +334,8 @@ test("extension: no balance fetch or status without a DeepSeek model", async (t)
 			await flush();
 			t.mock.timers.tick(60_000);
 			assert.equal(fetchCount, 0, "never fetches for non-deepseek providers");
-			assert.equal(statuses.size, 0);
+			assert.equal(statuses.has(STATUS_KEY), false);
+			assert.equal(statuses.has(BALANCE_KEY), false);
 
 			// Switching to deepseek fetches and publishes both statuses.
 			setModel(DEEPSEEK_MODEL);
@@ -347,6 +365,7 @@ test("extension: switching away from deepseek clears the balance immediately", a
 			await flush();
 			assert.equal(statuses.has(BALANCE_KEY), false, "balance cleared on switch away");
 			assert.equal(statuses.has(STATUS_KEY), false);
+			assert.ok(statuses.get(SPEND_KEY), "spend survives a switch away from deepseek");
 		},
 	);
 });
@@ -490,4 +509,43 @@ test("extension: model_select falls back to event.model when ctx.model is unset"
 	setModel(undefined);
 	await fire("model_select", { model: DEEPSEEK_MODEL });
 	assert.match(statuses.get(STATUS_KEY) ?? "", /DeepSeek (PEAK|off-peak)/);
+});
+
+// ---------------------------------------------------------------------------
+// Regime-correct session spend
+// ---------------------------------------------------------------------------
+
+test("extension: session_start publishes the regime-correct spend", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, fire, entries } = makePi();
+	entries.push(spendEntry(0.02, Date.UTC(2026, 9, 19, 13, 46))); // deepseek off-peak → 0.01
+	entries.push(spendEntry(0.02, Date.UTC(2026, 9, 19, 1, 30))); // deepseek peak → 0.02
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+
+	await fire("session_start");
+	assert.equal(statuses.get(SPEND_KEY), "[success]$0.0300");
+});
+
+test("extension: an assistant message_end refreshes the spend", async (t) => {
+	t.mock.timers.enable({ apis: ["Date", "setInterval"] });
+	t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime());
+
+	const { pi, statuses, fire, entries } = makePi();
+	ext(pi as unknown as Parameters<typeof ext>[0]);
+	await fire("session_start");
+	assert.equal(statuses.get(SPEND_KEY), "[success]$0.0000");
+
+	entries.push(spendEntry(0.02, Date.UTC(2026, 9, 19, 13, 46))); // off-peak → 0.01
+	await fire("message_end", { message: { role: "assistant" } });
+	assert.equal(statuses.get(SPEND_KEY), "[success]$0.0100");
+
+	// A user message end does not recompute: the next assistant message does.
+	entries.push(spendEntry(0.02, Date.UTC(2026, 9, 19, 13, 46)));
+	await fire("message_end", { message: { role: "user" } });
+	assert.equal(statuses.get(SPEND_KEY), "[success]$0.0100");
+
+	await fire("message_end", { message: { role: "assistant" } });
+	assert.equal(statuses.get(SPEND_KEY), "[success]$0.0200");
 });

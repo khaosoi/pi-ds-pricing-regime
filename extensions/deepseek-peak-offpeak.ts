@@ -11,9 +11,18 @@
  * and throttled to BALANCE_REFRESH_MS). It is likewise only shown while a
  * DeepSeek model is selected; switching models clears or restores both.
  *
- * The status is only displayed while the selected model comes from the
- * DeepSeek provider (`ctx.model.provider === "deepseek"`); switching models
- * clears or restores it immediately.
+ * A third status shows the regime-correct session spend (see
+ * `sessionSpendUsd`). Pi's own cost figure comes from the model catalogue,
+ * and the DeepSeek catalogue entry carries peak rates only (its cost field
+ * has no time-of-day dimension), so it over-reports by 2x whenever the regime
+ * is off-peak. Halving the DeepSeek messages billed off-peak makes the figure
+ * match what the platform actually charges. Unlike the two statuses above,
+ * this one is published for every provider, so it can replace pi-footer's
+ * `cost` widget everywhere.
+ *
+ * The regime and balance statuses are only displayed while the selected model
+ * comes from the DeepSeek provider (`ctx.model.provider === "deepseek"`);
+ * switching models clears or restores them immediately.
  *
  * DeepSeek's regime (per api-docs.deepseek.com/quick_start/pricing):
  *   Peak hours (UTC): 01:00–04:00 and 06:00–10:00
@@ -58,6 +67,7 @@ const DAY_MS = 86_400_000;
 // on the left margin). The keys are never displayed — only the status text.
 export const STATUS_KEY = "zz-deepseek-regime";
 export const BALANCE_KEY = "zz-deepseek-balance";
+export const SPEND_KEY = "zz-deepseek-spend";
 const REFRESH_MS = 30_000; // refresh a few times per minute so the local-time label stays current
 
 /** DeepSeek platform origin for the balance API (api-docs.deepseek.com/api-create-user-balance). */
@@ -196,6 +206,63 @@ export function formatBalance(balance: { total: number; currency: string }): {
 	return { text, low: total < threshold };
 }
 
+/**
+ * The instant of an assistant-message entry, from its millisecond message
+ * timestamp or its ISO entry timestamp. Undefined when neither is readable.
+ */
+function messageInstant(entry: Record<string, unknown>, message: Record<string, unknown>): number | undefined {
+	const candidates = [message.timestamp, entry.timestamp];
+	for (const candidate of candidates) {
+		if (typeof candidate === "number" && Number.isFinite(candidate)) return candidate;
+		if (typeof candidate !== "string") continue;
+		const parsed = Date.parse(candidate);
+		if (Number.isFinite(parsed)) return parsed;
+	}
+	return undefined;
+}
+
+/**
+ * Regime-correct session spend in USD, summed from the assistant messages in
+ * `entries` (e.g. `ctx.sessionManager.getBranch()`).
+ *
+ * Each message's recorded `usage.cost.total` already reflects its token split
+ * and the catalogue rates, but the DeepSeek catalogue carries peak rates with no
+ * time-of-day dimension. Off-peak billing — including the weekend flat rate — is
+ * exactly half, so DeepSeek messages billed outside a peak window count at half
+ * their recorded cost. Other providers, peak windows, and entries whose
+ * timestamp cannot be read count as recorded.
+ */
+export function sessionSpendUsd(entries: readonly unknown[]): number {
+	let total = 0;
+	for (const entry of entries) {
+		if (typeof entry !== "object" || entry === null) continue;
+		const record = entry as Record<string, unknown>;
+		const message = record.message;
+		if (typeof message !== "object" || message === null) continue;
+		const fields = message as Record<string, unknown>;
+		if (fields.role !== "assistant") continue;
+		const usage = fields.usage;
+		if (typeof usage !== "object" || usage === null) continue;
+		const cost = (usage as Record<string, unknown>).cost;
+		if (typeof cost !== "object" || cost === null) continue;
+		const recorded = Number((cost as Record<string, unknown>).total);
+		if (!Number.isFinite(recorded)) continue;
+		const at = messageInstant(record, fields);
+		const offPeakDeepSeek = fields.provider === DEEPSEEK_PROVIDER && at !== undefined && !inPeak(new Date(at));
+		total += offPeakDeepSeek ? recorded / 2 : recorded;
+	}
+	return total;
+}
+
+/**
+ * The rendered spend: four decimals under $1 (so off-peak/peak differences are
+ * visible), two above. Matches pi-footer's `cost` widget so the status is a
+ * drop-in replacement for it.
+ */
+export function formatSpend(usd: number): string {
+	return usd < 1 ? `$${usd.toFixed(4)}` : `$${usd.toFixed(2)}`;
+}
+
 /** The status text for `now`, or undefined to clear the status. */
 export function statusText(now: Date): { text: string; color: "warning" | "success" } {
 	const boundary = nextBoundaryUtc(now);
@@ -265,6 +332,9 @@ export default function (pi: ExtensionAPI) {
 	};
 
 	const update = async (ctx: ExtensionContext, model: ExtensionContext["model"]) => {
+		// Spend is meaningful for every provider, so it survives a model switch.
+		const spend = formatSpend(sessionSpendUsd(ctx.sessionManager.getBranch()));
+		ctx.ui.setStatus(SPEND_KEY, ctx.ui.theme.fg("success", spend));
 		if (!isDeepSeekModel(model)) {
 			ctx.ui.setStatus(STATUS_KEY, undefined);
 			ctx.ui.setStatus(BALANCE_KEY, undefined);
@@ -285,6 +355,13 @@ export default function (pi: ExtensionAPI) {
 	// Balance can drop mid-session (usage debits, new grants) — re-check on the
 	// throttled schedule after each turn as well.
 	pi.on("turn_end", async (_event, ctx) => {
+		await update(ctx, ctx.model);
+	});
+
+	// Spend moves as soon as an assistant message lands, so refresh then too
+	// rather than waiting for the turn to settle.
+	pi.on("message_end", async (event, ctx) => {
+		if (event.message.role !== "assistant") return;
 		await update(ctx, ctx.model);
 	});
 
