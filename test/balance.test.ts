@@ -23,10 +23,32 @@ test("parseBalance: documented response shape", () => {
 	assert.deepEqual(parseBalance(API_BODY), { total: 110, currency: "CNY", isAvailable: true });
 });
 
-test("parseBalance: takes the first balance entry", () => {
+test("parseBalance: prefers the USD entry wherever it sits", () => {
 	const body = {
 		...API_BODY,
 		balance_infos: [API_BODY.balance_infos[0], { currency: "USD", total_balance: "5.00" }],
+	};
+	assert.deepEqual(parseBalance(body), { total: 5, currency: "USD", isAvailable: true });
+
+	const usdFirst = {
+		...API_BODY,
+		balance_infos: [{ currency: "USD", total_balance: "7.50" }, ...API_BODY.balance_infos],
+	};
+	assert.deepEqual(parseBalance(usdFirst), { total: 7.5, currency: "USD", isAvailable: true });
+});
+
+test("parseBalance: falls back to the account's own currency without a USD entry", () => {
+	const body = { ...API_BODY, balance_infos: [{ currency: "CNY", total_balance: "110.00" }] };
+	assert.deepEqual(parseBalance(body), { total: 110, currency: "CNY", isAvailable: true });
+});
+
+test("parseBalance: a malformed USD entry does not hide a valid one", () => {
+	const body = {
+		...API_BODY,
+		balance_infos: [
+			{ currency: "USD", total_balance: "not-a-number" },
+			{ currency: "CNY", total_balance: "110.00" },
+		],
 	};
 	assert.deepEqual(parseBalance(body), { total: 110, currency: "CNY", isAvailable: true });
 });
