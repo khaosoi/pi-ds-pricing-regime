@@ -27,16 +27,16 @@
  * switching models clears or restores them immediately.
  *
  * DeepSeek's regime (per api-docs.deepseek.com/quick_start/pricing):
- *   Peak hours (UTC): 01:00–04:00 and 06:00–09:00
+ *   Peak hours (UTC): 01:00–04:00 and 06:00–10:00, Monday through Friday.
  *   All other hours are off-peak (half the peak rates).
- *   In Beijing time (UTC+8) peak is 09:00–12:00 and 14:00–17:00, so weekday
- *   off-peak runs 12:00–14:00 and 17:00–09:00.
+ *   In Beijing time (UTC+8) peak is 09:00–12:00 and 14:00–18:00, so weekday
+ *   off-peak runs 12:00–14:00 and 18:00–09:00.
  *   Peak/off-peak billing has been live since 2026-08-16T16:00:00Z.
  *
  *   Since 2026-08-22T16:00:00Z (= 2026-08-23 00:00 Beijing), Saturdays and
  *   Sundays (Beijing calendar time) have no peak tiers at all: every call
  *   is billed at the uniform off-peak rate. With the weekday windows above,
- *   the resulting off-peak block runs from Friday 17:00 Beijing to Monday
+ *   the resulting off-peak block runs from Friday 18:00 Beijing to Monday
  *   09:00 Beijing.
  *
  *   Flash series pricing effective 2026-09-10T04:00:00Z (= 12:00 Beijing on
@@ -52,7 +52,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 /** Peak windows as [start, end) UTC hours. Edit here if DeepSeek changes the regime. */
 export const PEAK_WINDOWS: ReadonlyArray<readonly [number, number]> = [
 	[1, 4], // 01:00–04:00 UTC = 09:00–12:00 Beijing
-	[6, 9], // 06:00–09:00 UTC = 14:00–17:00 Beijing
+	[6, 10], // 06:00–10:00 UTC = 14:00–18:00 Beijing
 ];
 
 /**

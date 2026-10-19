@@ -93,15 +93,15 @@ value. `LOW_BALANCE` gives the warning colour a per-currency threshold
 
 Source: [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing)
 
-- **Peak hours (UTC):** `01:00–04:00` and `06:00–09:00`; all other hours are
-  off-peak at half the peak rates. In Beijing time (UTC+8), peak is
-  `09:00–12:00` and `14:00–17:00`, so weekday off-peak runs `12:00–14:00` and
-  `17:00–09:00`.
+- **Peak hours (UTC):** `01:00–04:00` and `06:00–10:00`, Monday through Friday;
+  all other hours are off-peak at half the peak rates. In Beijing time (UTC+8),
+  peak is `09:00–12:00` and `14:00–18:00`, so weekday off-peak runs
+  `12:00–14:00` and `18:00–09:00`.
 - **Live since:** `2026-08-16T16:00:00Z` (before that, billing was flat).
 - **Weekends:** since `2026-08-22T16:00:00Z` (= 2026-08-23 00:00 Beijing), Saturdays and
   Sundays in Beijing calendar time have no peak tiers — every call bills at the uniform
   off-peak rate. With the weekday windows above, the off-peak block runs from
-  Friday 17:00 Beijing to Monday 09:00 Beijing.
+  Friday 18:00 Beijing to Monday 09:00 Beijing.
 
 All are constants at the top of
 [`extensions/deepseek-peak-offpeak.ts`](extensions/deepseek-peak-offpeak.ts)
@@ -221,7 +221,7 @@ To release a new version:
 
 - Labels show the *next regime boundary* in local time, not the full schedule,
   to keep the footer compact (e.g. `until 12:00 local` rather than
-  `09:00–12:00, 14:00–17:00`).
+  `09:00–12:00, 14:00–18:00`).
 - Boundary labels are rendered from the boundary's *actual instant*
   (`nextBoundaryUtc` → `formatLocalTime`), so they stay correct even when a
   DST transition falls between now and the boundary (covered by the DST
