@@ -24,18 +24,18 @@ import { inPeak, nextBoundaryUtc, formatLocalTime, statusText } from "../extensi
 
 const tz = process.env.TZ ?? "(unset)";
 
-// Local-time peak windows per zone, derived from the UTC windows [1,4) & [6,9):
-//   Etc/GMT-8 (UTC+8):  peak 09:00–12:00, 14:00–17:00
-//   Etc/GMT-10 (UTC+10): peak 11:00–14:00, 16:00–19:00
-//   Etc/GMT+5 (UTC-5):  peak 20:00–23:00, 01:00–04:00
+// Local-time peak windows per zone, derived from the UTC windows [1,4) & [6,10):
+//   Etc/GMT-8 (UTC+8):  peak 09:00–12:00, 14:00–18:00
+//   Etc/GMT-10 (UTC+10): peak 11:00–14:00, 16:00–20:00
+//   Etc/GMT+5 (UTC-5):  peak 20:00–23:00, 01:00–05:00
 const TABLES = {
 	"Etc/GMT-8": [
 		[0, false, "09:00", "DeepSeek off-peak — next peak 09:00 local"],
 		[1, true, "12:00", "DeepSeek PEAK — until 12:00 local"],
 		[3, true, "12:00", "DeepSeek PEAK — until 12:00 local"],
 		[5, false, "14:00", "DeepSeek off-peak — next peak 14:00 local"],
-		[6, true, "17:00", "DeepSeek PEAK — until 17:00 local"],
-		[9, false, "09:00", "DeepSeek off-peak — next peak Tuesday 09:00 local"],
+		[6, true, "18:00", "DeepSeek PEAK — until 18:00 local"],
+		[9, true, "18:00", "DeepSeek PEAK — until 18:00 local"],
 		// 19:00 local Monday → next peak is tomorrow (Tuesday) 09:00 local.
 		[11, false, "09:00", "DeepSeek off-peak — next peak Tuesday 09:00 local"],
 	],
@@ -44,8 +44,8 @@ const TABLES = {
 		[1, true, "14:00", "DeepSeek PEAK — until 14:00 local"],
 		[3, true, "14:00", "DeepSeek PEAK — until 14:00 local"],
 		[5, false, "16:00", "DeepSeek off-peak — next peak 16:00 local"],
-		[6, true, "19:00", "DeepSeek PEAK — until 19:00 local"],
-		[9, false, "11:00", "DeepSeek off-peak — next peak Tuesday 11:00 local"],
+		[6, true, "20:00", "DeepSeek PEAK — until 20:00 local"],
+		[9, true, "20:00", "DeepSeek PEAK — until 20:00 local"],
 		// 21:00 local Monday → next peak is tomorrow (Tuesday) 11:00 local.
 		[11, false, "11:00", "DeepSeek off-peak — next peak Tuesday 11:00 local"],
 	],
@@ -54,8 +54,8 @@ const TABLES = {
 		[1, true, "23:00", "DeepSeek PEAK — until 23:00 local"],
 		[3, true, "23:00", "DeepSeek PEAK — until 23:00 local"],
 		[5, false, "01:00", "DeepSeek off-peak — next peak 01:00 local"],
-		[6, true, "04:00", "DeepSeek PEAK — until 04:00 local"],
-		[9, false, "20:00", "DeepSeek off-peak — next peak 20:00 local"],
+		[6, true, "05:00", "DeepSeek PEAK — until 05:00 local"],
+		[9, true, "05:00", "DeepSeek PEAK — until 05:00 local"],
 		[11, false, "20:00", "DeepSeek off-peak — next peak 20:00 local"],
 	],
 };
@@ -96,8 +96,8 @@ const DST_SCENARIOS = {
 		["2026-11-02T05:30:00Z", "DeepSeek off-peak — next peak 01:00 local"],
 		// Spring-forward Sunday: 07:30Z Mar 14 = 03:30 EDT; next peak Mon 01:00Z = Sun 21:00 EDT.
 		["2027-03-14T07:30:00Z", "DeepSeek off-peak (weekend flat rate) — next peak 21:00 local"],
-		// Spring-forward Monday sanity: 07:30Z Mar 15 = 03:30 EDT, peak until 09:00Z = 05:00 EDT.
-		["2027-03-15T07:30:00Z", "DeepSeek PEAK — until 05:00 local"],
+		// Spring-forward Monday sanity: 07:30Z Mar 15 = 03:30 EDT, peak until 10:00Z = 06:00 EDT.
+		["2027-03-15T07:30:00Z", "DeepSeek PEAK — until 06:00 local"],
 	],
 	"Australia/Sydney": [
 		// Sydney Saturday fall-back: the next peak (Monday 01:00Z Apr 5 = 11:00
