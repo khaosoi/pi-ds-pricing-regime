@@ -35,8 +35,9 @@ Use `just` (recipe bodies run the same npm scripts):
   `formatBalance`, `sessionSpendUsd`, `formatSpend`) are exported for tests; the
   default export wires them to `ctx.ui.setStatus`. The regime and balance
   statuses are gated on `ctx.model`; the spend status is published for every
-  provider. Refresh points: `session_start`, `message_end` (assistant only),
-  `turn_end`, `model_select`, and a 30s timer.
+  provider. `parseBalance` prefers the USD entry among the API's `balance_infos`
+  (one entry per currency, order not guaranteed). Refresh points: `session_start`,
+  `message_end` (assistant only), `turn_end`, `model_select`, and a 30s timer.
 - `test/` — `regime.test.ts` (window/boundary/weekend math), `balance.test.ts`
   (balance parsing/rendering), `spend.test.ts` (regime-correct spend),
   `smoke.test.ts` (mock pi context + process-local mock timers; status text,

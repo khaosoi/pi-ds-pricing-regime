@@ -19,8 +19,8 @@ includes the boundary's local weekday so `09:00` is not mistaken for today's
 clock time.
 
 Two companion statuses can sit alongside it: the platform credit balance
-(`¥12.34`, fetched from the balance API) and the regime-correct session spend
-(`$0.0154`, see [Session spend](#session-spend)).
+(`$12.34`, the USD entry fetched from the balance API) and the regime-correct
+session spend (`$0.0154`, see [Session spend](#session-spend)).
 
 The status refreshes every 30s, so it flips exactly at hour boundaries.
 
@@ -39,7 +39,7 @@ It publishes three keys, sorted alphabetically there:
 | Status key | Shows |
 | --- | --- |
 | `STATUS_KEY` | `DeepSeek PEAK — until 12:00 local` (see table above) |
-| `BALANCE_KEY` | `¥12.34` — DeepSeek platform credit balance, warning-coloured under the `LOW_BALANCE` thresholds |
+| `BALANCE_KEY` | `$12.34` — DeepSeek platform credit balance in USD, warning-coloured under the `LOW_BALANCE` thresholds |
 | `SPEND_KEY` | `$0.0154` — regime-correct session spend, for every provider |
 
 For a configurable multi-line footer we recommend
@@ -74,6 +74,20 @@ provider (only the regime and balance statuses are DeepSeek-only).
 
 Four decimals are shown under a dollar so the off-peak/peak difference is
 visible (`$0.0154`), two above (`$12.35`).
+
+## Credit balance
+
+The `/user/balance` endpoint returns one entry per currency the account holds
+(CNY and/or USD) in an order it does not guarantee. The extension always shows
+the **USD** entry, wherever it sits in `balance_infos` — the published pricing
+and the session spend are USD, so the balance is too. An account with no USD
+entry reports its own currency, rendered with the matching symbol (`¥12.34`)
+rather than passed off as dollars.
+
+The balance is fetched with the provider's resolved API key, cached, and
+refreshed at most once per `BALANCE_REFRESH_MS`; failures keep the previous
+value. `LOW_BALANCE` gives the warning colour a per-currency threshold
+(`CNY: 20`, `USD: 5`), with `FALLBACK_LOW_BALANCE` for currencies not listed.
 
 ## The regime
 

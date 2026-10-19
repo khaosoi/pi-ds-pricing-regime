@@ -6,10 +6,12 @@
  * All boundary times in the status are shown in the machine's local
  * timezone — no timezone is hardcoded.
  *
- * A second status shows the DeepSeek platform credit balance (fetched from
- * api.deepseek.com/user/balance with the provider's resolved API key, cached
- * and throttled to BALANCE_REFRESH_MS). It is likewise only shown while a
- * DeepSeek model is selected; switching models clears or restores both.
+ * A second status shows the DeepSeek platform credit balance in USD (fetched
+ * from api.deepseek.com/user/balance with the provider's resolved API key,
+ * cached and throttled to BALANCE_REFRESH_MS). The API returns one entry per
+ * currency the account holds, so the USD entry is chosen explicitly. It is
+ * likewise only shown while a DeepSeek model is selected; switching models
+ * clears or restores both.
  *
  * A third status shows the regime-correct session spend (see
  * `sessionSpendUsd`). Pi's own cost figure comes from the model catalogue,
@@ -173,26 +175,43 @@ export function isDeepSeekModel(model: { provider?: string } | undefined | null)
  * Returns undefined when the shape is not as documented (proxy response, API
  * change, error JSON) so callers can keep showing the previous value.
  */
+/**
+ * Currency the balance status reports. The balance API returns one entry per
+ * currency the account holds (CNY and/or USD), in an order it does not
+ * guarantee, so the USD entry is chosen explicitly: the pricing and the session
+ * spend are USD.
+ */
+export const BALANCE_CURRENCY = "USD";
+
+/**
+ * Parse a DeepSeek `/user/balance` response body into a balance entry.
+ * Returns undefined when the shape is not as documented (proxy response, API
+ * change, error JSON) so callers can keep showing the previous value.
+ *
+ * The USD entry wins over any other currency, wherever it sits in
+ * `balance_infos`. An account with no USD entry reports its own currency, which
+ * is still rendered with the matching symbol rather than passed off as dollars.
+ */
 export function parseBalance(body: unknown): { total: number; currency: string; isAvailable: boolean } | undefined {
 	if (typeof body !== "object" || body === null) return undefined;
 	const record = body as Record<string, unknown>;
 	const infos = Array.isArray(record.balance_infos) ? record.balance_infos : [];
-	const info = infos[0];
-	if (typeof info !== "object" || info === null) return undefined;
-	const entry = info as Record<string, unknown>;
-	const total = Number(entry.total_balance);
-	if (!Number.isFinite(total)) return undefined;
+	const valid = infos
+		.filter((info): info is Record<string, unknown> => typeof info === "object" && info !== null)
+		.filter((entry) => Number.isFinite(Number(entry.total_balance)));
+	const entry = valid.find((candidate) => candidate.currency === BALANCE_CURRENCY) ?? valid[0];
+	if (!entry) return undefined;
 	return {
-		total,
+		total: Number(entry.total_balance),
 		currency: typeof entry.currency === "string" ? entry.currency : "",
 		isAvailable: record.is_available !== false,
 	};
 }
 
 /**
- * The rendered balance status: "¥12.34", low-balances in the theme's
- * warning colour. Precision: integers lose the decimals ("¥12"), anything
- * else keeps two. Unknown currencies render as "12.34 EUR".
+ * The rendered balance status: "$12.34" (or the account's own currency when the
+ * API reports no USD entry), low balances in the theme's warning colour.
+ * Precision: integers lose the decimals ("$12"), anything else keeps two.
  */
 export function formatBalance(balance: { total: number; currency: string }): {
 	text: string;

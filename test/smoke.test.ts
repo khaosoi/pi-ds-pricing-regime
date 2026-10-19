@@ -209,7 +209,7 @@ async function withFetchStub(stub: (url: string, init?: RequestInit) => Promise<
  */
 const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
 
-function balanceResponse(total: string, currency = "CNY"): Response {
+function balanceResponse(total: string, currency = "USD"): Response {
 	return new Response(JSON.stringify({ is_available: true, balance_infos: [{ currency, total_balance: total }] }), {
 		status: 200,
 	});
@@ -238,7 +238,7 @@ test("extension: session_start fetches the balance and publishes it", async (t) 
 		async () => {
 			await fire("session_start");
 			await flush();
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[success\]¥110$/);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[success\]\$110$/);
 			assert.equal(statuses.size, 3, "regime + balance + spend statuses present");
 		},
 	);
@@ -268,7 +268,7 @@ test("extension: balance fetches are throttled to BALANCE_REFRESH_MS", async (t)
 			t.mock.timers.tick(30_000); // next interval refresh lands past the window
 			await flush();
 			assert.equal(fetchCount, 2, "refetches once the throttle window has passed");
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /¥/);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /\$/);
 		},
 	);
 });
@@ -284,7 +284,7 @@ test("extension: low balance renders in the warning colour", async (t) => {
 		async () => {
 			await fire("session_start");
 			await flush();
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[warning\]¥3\.50$/);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[warning\]\$3\.50$/);
 		},
 	);
 });
@@ -304,14 +304,14 @@ test("extension: fetch failure leaves the previous balance untouched", async (t)
 		async () => {
 			await fire("session_start");
 			await flush();
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /¥110/);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /\$110/);
 
 			// Force a fresh (failing) fetch past the throttle window.
 			fail = true;
 			t.mock.timers.setTime(new Date("2026-08-17T01:30:00Z").getTime() + BALANCE_REFRESH_MS + 1);
 			await fire("turn_end", {});
 			await flush();
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /¥110/, "cached value survives a failed fetch");
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /\$110/, "cached value survives a failed fetch");
 		},
 	);
 });
@@ -342,7 +342,7 @@ test("extension: no balance fetch or status without a DeepSeek model", async (t)
 			await fire("model_select", { model: DEEPSEEK_MODEL });
 			await flush();
 			assert.equal(fetchCount, 1);
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /¥110/);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /\$110/);
 		},
 	);
 });
@@ -414,7 +414,7 @@ test("extension: balance endpoint honours a custom baseUrl origin", async (t) =>
 			await fire("session_start");
 			await flush();
 			assert.equal(fetchCount, 1);
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /¥110/);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /\$110/);
 		},
 	);
 });
@@ -461,13 +461,17 @@ test("extension: is_available false flags an affordable balance as low", async (
 	await withFetchStub(
 		async () =>
 			new Response(
-				JSON.stringify({ is_available: false, balance_infos: [{ currency: "CNY", total_balance: "500.00" }] }),
+				JSON.stringify({ is_available: false, balance_infos: [{ currency: "USD", total_balance: "500.00" }] }),
 				{ status: 200 },
 			),
 		async () => {
 			await fire("session_start");
 			await flush();
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /^\[warning\]¥500$/, "credits exist but can't pay → warning");
+			assert.match(
+				statuses.get(BALANCE_KEY) ?? "",
+				/^\[warning\]\$500$/,
+				"credits exist but can't pay → warning",
+			);
 		},
 	);
 });
@@ -494,7 +498,7 @@ test("extension: overlapping updates collapse into one in-flight request", async
 			resolveFetch(balanceResponse("110.00"));
 			await flush();
 			assert.equal(fetchCount, 1, "second update must reuse the in-flight request");
-			assert.match(statuses.get(BALANCE_KEY) ?? "", /¥110/);
+			assert.match(statuses.get(BALANCE_KEY) ?? "", /\$110/);
 		},
 	);
 });
