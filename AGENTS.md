@@ -112,7 +112,7 @@ lockfile), so a `git worktree add` gets identical settings. One caveat:
 
 ## Publishing (do NOT do without explicit user go-ahead)
 
-v0.1.0 is published to npm as `@khaosoigai/pi-ds-pricing-regime`. Release
+v0.2.0 is published to npm as `@khaosoigai/pi-ds-pricing-regime`. Release
 checklist for a new version (documented in README):
 
 1. `just pack` — confirm tarball contents
