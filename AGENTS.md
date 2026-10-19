@@ -31,13 +31,17 @@ Use `just` (recipe bodies run the same npm scripts):
   `DEEPSEEK_PROVIDER` (the provider id that gates visibility). If
   DeepSeek changes the regime, edit here. Pure helpers (`inPeak`,
   `isWeekendBeijing`, `nextBoundaryUtcHour`, `nextBoundaryUtc`, `formatLocalTime`,
-  `formatLocalDayPrefix`, `isDeepSeekModel`, `statusText`) are exported for
-  tests; the default export wires them to `ctx.ui.setStatus`, gated on
-  `ctx.model` and refreshed on `model_select`.
-- `test/` — `regime.test.ts` (window/boundary/weekend math),
-  `smoke.test.ts` (mock pi context + process-local mock timers; status text +
-  timer lifecycle), `timezone-matrix.test.ts` (spawns the matrix script under
-  fixed-offset and real DST TZs and asserts exact local labels).
+  `formatLocalDayPrefix`, `isDeepSeekModel`, `statusText`, `parseBalance`,
+  `formatBalance`, `sessionSpendUsd`, `formatSpend`) are exported for tests; the
+  default export wires them to `ctx.ui.setStatus`. The regime and balance
+  statuses are gated on `ctx.model`; the spend status is published for every
+  provider. Refresh points: `session_start`, `message_end` (assistant only),
+  `turn_end`, `model_select`, and a 30s timer.
+- `test/` — `regime.test.ts` (window/boundary/weekend math), `balance.test.ts`
+  (balance parsing/rendering), `spend.test.ts` (regime-correct spend),
+  `smoke.test.ts` (mock pi context + process-local mock timers; status text,
+  balance, spend, timer lifecycle), `timezone-matrix.test.ts` (spawns the matrix
+  script under fixed-offset and real DST TZs and asserts exact local labels).
 - `biome.json` — formatter and linter configuration. Biome covers TypeScript,
   JavaScript, JSON, and config files; Markdown and `justfile` prose are not
   formatted by these recipes.
@@ -91,6 +95,10 @@ lockfile), so a `git worktree add` gets identical settings. One caveat:
 
 - Clock-dependent tests use `t.mock.timers` only as process-local virtual time
   (Date + setInterval APIs); they never change the operating system clock.
+- The spend status corrects pi's cost figure, which uses peak-only catalogue
+  rates for DeepSeek: `sessionSpendUsd` halves the recorded cost of DeepSeek
+  messages whose own timestamp falls outside a peak window. Keep it pure by
+  reading each entry's timestamp rather than the wall clock.
 - The timezone matrix covers the midnight wrap (off-peak → next-day peak) and
   weekend flat-rate scenarios, including DST transitions.
 - Pure helpers receive explicit instants; `statusText(now)` is deterministic

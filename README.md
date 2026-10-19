@@ -3,7 +3,8 @@
 A [pi](https://github.com/earendil-works/pi-coding-agent) extension that shows
 whether DeepSeek is currently in **peak** or **off-peak** billing mode, in the
 bottom-left of the footer. It reads the machine's clock, so all boundary times
-display in the machine's local timezone — nothing is hardcoded.
+display in the machine's local timezone — nothing is hardcoded. It also
+publishes the platform credit balance and a regime-correct session spend.
 
 ## What it shows
 
@@ -17,6 +18,10 @@ When the next boundary is not today (e.g. on a weekend morning), the label
 includes the boundary's local weekday so `09:00` is not mistaken for today's
 clock time.
 
+Two companion statuses can sit alongside it: the platform credit balance
+(`¥12.34`, fetched from the balance API) and the regime-correct session spend
+(`$0.0154`, see [Session spend](#session-spend)).
+
 The status refreshes every 30s, so it flips exactly at hour boundaries.
 
 The indicator is shown **only while the selected model comes from the DeepSeek
@@ -29,12 +34,13 @@ is a constant (`DEEPSEEK_PROVIDER`) at the top of the extension.
 
 The extension publishes plain pi statuses (`ctx.ui.setStatus`), so it works
 with the **built-in footer** out of the box — no companion extension required.
-It publishes two keys, sorted alphabetically there:
+It publishes three keys, sorted alphabetically there:
 
 | Status key | Shows |
 | --- | --- |
-| `zz-deepseek-regime` | `DeepSeek PEAK — until 12:00 local` (see table above) |
-| `zz-deepseek-balance` | `¥12.34` — DeepSeek platform credit balance, warning-coloured under the `LOW_BALANCE` thresholds |
+| `STATUS_KEY` | `DeepSeek PEAK — until 12:00 local` (see table above) |
+| `BALANCE_KEY` | `¥12.34` — DeepSeek platform credit balance, warning-coloured under the `LOW_BALANCE` thresholds |
+| `SPEND_KEY` | `$0.0154` — regime-correct session spend, for every provider |
 
 For a configurable multi-line footer we recommend
 [pi-footer](https://github.com/wobondar/pi-footer) (`pi install
@@ -46,6 +52,28 @@ the same keys from pi-footer's automatic extension-status row
 (`extensionStatusRow.hiddenKeys` in `~/.pi/agent/extensions/pi-footer.json`)
 to avoid showing them twice. Removing pi-footer (`pi remove npm:pi-footer`)
 restores the built-in footer with these statuses intact.
+
+To drop pi-footer's own `cost` widget, whose figure is peak-priced (see
+[Session spend](#session-spend)), replace it with an `external-status` widget
+keyed to `SPEND_KEY`: keep the spend where the cost figure was and hide the key
+from the automatic extension-status row, as with the others.
+
+## Session spend
+
+Pi's session cost comes from the model catalogue, and the DeepSeek catalogue
+entry carries **peak rates only** — its `cost` field has no time-of-day
+dimension. Off-peak, and under the weekend flat rate, the platform bills half of
+that, so Pi's figure over-reports by 2× whenever the regime is off-peak.
+
+This extension recomputes the spend from the session's assistant messages: a
+deepseek message's recorded cost is halved when its timestamp falls outside a
+peak window, and left as recorded otherwise. Other providers, peak windows, and
+messages with no readable timestamp count as recorded. The figure refreshes on
+each assistant message, on turn end, and on the 30s tick, and is shown for every
+provider (only the regime and balance statuses are DeepSeek-only).
+
+Four decimals are shown under a dollar so the off-peak/peak difference is
+visible (`$0.0154`), two above (`$12.35`).
 
 ## The regime
 
@@ -77,6 +105,10 @@ on 2026-09-10). Per 1M tokens:
 `deepseek-v4-flash` (internally V4.1-Flash) is the only served model: V4 Pro
 and the experimental vision model are deprecated. The peak/off-peak windows
 and the weekend flat-rate rule are unchanged by the repricing.
+
+The pricing table is what [Session spend](#session-spend) assumes: the model
+catalogue carries the peak column, so off-peak messages count at half the
+recorded cost.
 
 ## Install
 
@@ -133,8 +165,12 @@ process-local virtual timers.
 
 - `test/regime.test.ts` — window boundaries, next-boundary math, weekend
   flat-rate rule.
+- `test/balance.test.ts` — balance response parsing and rendering.
+- `test/spend.test.ts` — regime-correct session spend: halving, weekend,
+  other providers, malformed entries, formatting.
 - `test/smoke.test.ts` — loads the real extension with a mock pi context and
-  mocked timers: peak / off-peak / weekend status text, and timer lifecycle.
+  mocked timers: peak / off-peak / weekend status text, balance and spend
+  statuses, and timer lifecycle.
 - `test/timezone-matrix.test.ts` — runs `scripts/timezone-matrix.mjs` under
   fixed-offset zones (UTC+8, UTC+10, UTC-5) and real DST zones
   (America/New_York, Australia/Sydney), asserting exact local-time labels
@@ -142,7 +178,7 @@ process-local virtual timers.
   that land on DST transition instants.
 
 CI (`.github/workflows/ci.yml`) runs formatting/lint checks, typecheck, and
-41 tests on Node 24 for every push/PR.
+63 tests on Node 24 for every push/PR.
 
 ## Publishing
 
